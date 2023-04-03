@@ -79,6 +79,11 @@ void QuadControl::Run()
         _controller.update_state_attitude(_state_att);
         _init_state_att = true;
       }
+      
+      if (_acc_sub.update(&_state_acc)){
+        _controller.update_state_acc(_state_acc);
+        _init_state_acc = true;
+      }
 
       // grab setpoint
       if (_trajectory_setpoint_sub.update(&_setpoint)){
@@ -86,7 +91,7 @@ void QuadControl::Run()
         _init_setpoint = true;
       }
 
-      _initialized = _init_state_Omega && _init_state_pos && _init_state_att && _init_setpoint;
+      _initialized = _init_state_Omega && _init_state_pos && _init_state_att && _init_state_acc && _init_setpoint;
 
     }
 
@@ -104,7 +109,7 @@ void QuadControl::Run()
       thrust_cmd = (thrust_cmd < 0) ? 0.0 : thrust_cmd; // prevent it from trying to be negative;
       Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
-      PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd, (double)torque_cmd.norm());
+      //PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd, (double)torque_cmd.norm());
 
       // do the mixing
       Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);

@@ -82,6 +82,7 @@ bool SimpleCommander::set_state(VehicleState new_state){
 
 			PX4_INFO("Switching to offboard control...");
 			_state = VehicleState::OFFBOARD;
+			_last_timestamp_offboard = hrt_absolute_time();
 			return true;
 
 		case VehicleState::LAND:
@@ -212,6 +213,8 @@ void SimpleCommander::publish_takeoff_setpoint(){
 	trajectory_setpoint_s setpoint;
 	setpoint.timestamp = hrt_absolute_time();
 
+
+
 	for (int i=0; i < 3; i++){
 	  setpoint.position[i] = 0.0;
 	  setpoint.velocity[i] = 0.0;
@@ -221,6 +224,17 @@ void SimpleCommander::publish_takeoff_setpoint(){
 	setpoint.position[2] = -4.0;
 	setpoint.yaw = 0.0;
 	setpoint.yawspeed = 0.0;
+
+	// // uncomment to do sinusoids in x and spins
+	// const auto elapsed_us = hrt_elapsed_time(&_last_timestamp_offboard);
+	// const float elapsed_s = (float)elapsed_us * (float)(1e-6);
+	// const float w = 2.0f * (float)M_PI / 10.0f; 
+	// setpoint.position[0] = std::sinf(w * elapsed_s);
+	// setpoint.velocity[0] = w * std::cosf(w * elapsed_s);
+	// setpoint.acceleration[0] = -w*w * std::sinf(w * elapsed_s);
+	// setpoint.jerk[0] = -w*w*w*std::cosf(w * elapsed_s);
+	// setpoint.yaw = w * elapsed_s;
+	// setpoint.yawspeed = w;
 
 
 	// publish offboard command mode

@@ -3,6 +3,8 @@
 // April 2023
 
 #include "GeometricController.hpp"
+#include "DiffFlat.hpp"
+
 
 using namespace matrix;
 
@@ -21,7 +23,7 @@ void GeometricController::set_gains(){
   kR = 0.35f;
   kOmega = 0.15f;
 
-  m = 0.8f;
+  m = 0.9f; // THE QUAD ACTUALLY WEIGHS 0.8f; this should should up as a wrong altitude, Geometric controller cant fix it, but the IndiGeometric should;
   g = 9.81f;
   J.setZero();
   J(0,0) = 0.005;
@@ -60,12 +62,23 @@ void GeometricController::update_state_Omega(vehicle_angular_velocity_s ang_vel)
 void GeometricController::update_setpoint(trajectory_setpoint_s sp) {
 
 
+  // these are in FRD frame
   for (size_t i=0; i<3; i++){
     x_ref(i) = sp.position[i];
     v_ref(i) = sp.velocity[i];
     a_ref(i) = sp.acceleration[i];
-    //TODO: grab jerk, snap as well
+    j_ref(i) = sp.jerk[i];
+    s_ref(i) = 0.0f;
   }
+
+  yaw_ref = sp.yaw;
+  yaw_vel_ref = sp.yawspeed;
+  yaw_acc_ref = 0.0f;
+  
+  // do the flat state to trajectory setpoint conversion
+  //flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref, j_ref, s_ref,  yaw_ref, yaw_vel_ref, yaw_acc_ref);
+
+
 
   //TODO(dev): update
   yaw_ref = sp.yaw; // desired yaw
@@ -90,6 +103,8 @@ void GeometricController::run(){
 
   Vector3f ex = x - x_ref;
   Vector3f ev = v - v_ref;
+
+  ex.print();
 
   Vector3f thrust = -kx * ex - kv * ev - m * g  * e3 + m * a_ref;
 

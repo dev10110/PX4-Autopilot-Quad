@@ -9,6 +9,9 @@ px4_add_module(
     Controllers/MixerLinear.cpp
     Controllers/GeometricController.hpp
     Controllers/GeometricController.cpp
+    Controllers/IndiGeometricController.hpp
+    Controllers/IndiGeometricController.cpp
+    Controllers/DiffFlat.hpp
   DEPENDS
 )
 

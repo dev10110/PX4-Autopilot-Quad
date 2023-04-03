@@ -76,4 +76,5 @@ class SimpleCommander : public ModuleBase<SimpleCommander>, public ModuleParams
     hrt_abstime _boot_timestamp;
     hrt_abstime _last_preflight_check;
     hrt_abstime _last_arm_status_pub;
+    hrt_abstime _last_timestamp_offboard;
 };
