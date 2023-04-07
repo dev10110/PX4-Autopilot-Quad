@@ -162,7 +162,7 @@ public:
 
 		bool has_nan = false;
 		for (size_t i=0; i < M; i++ && !has_nan){
-			if (isnan(a(i))) {
+			if (!PX4_ISFINITE(a(i))) {
 				has_nan = true;
 			}
 		}

@@ -43,8 +43,14 @@ publications:
 
   - topic: /fmu/out/vehicle_trajectory_waypoint_desired
     type: px4_msgs::msg::VehicleTrajectoryWaypoint
+  
+  - topic: /fmu/out/commander_status
+    type: px4_msgs::msg::CommanderStatus
 
 subscriptions:
+
+  - topic: /fmu/in/commander_set_state
+    type: px4_msgs::msg::CommanderSetState
 
   - topic: /fmu/in/offboard_control_mode
     type: px4_msgs::msg::OffboardControlMode

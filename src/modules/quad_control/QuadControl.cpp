@@ -2,25 +2,18 @@
 
 using namespace matrix;
 
-QuadControl::QuadControl():
-  ModuleParams(nullptr),
-  WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl)
-{
+QuadControl::QuadControl()
+    : ModuleParams(nullptr),
+      WorkItem(MODULE_NAME, px4::wq_configurations::rate_ctrl) {
 
   // initializer
   parameters_update();
-  
 }
 
-QuadControl::~QuadControl()
-{
-  perf_free(_cycle_perf);
-}
+QuadControl::~QuadControl() { perf_free(_cycle_perf); }
 
-
-bool QuadControl::init()
-{
-  if (!_ang_vel_sub.registerCallback()){
+bool QuadControl::init() {
+  if (!_ang_vel_sub.registerCallback()) {
     PX4_ERR("callback registration failed");
     return false;
   }
@@ -31,20 +24,17 @@ bool QuadControl::init()
   return true;
 }
 
-void QuadControl::parameters_update()
-{
+void QuadControl::parameters_update() {
   // check for parameter updates
-  if (_parameter_update_sub.updated()){
+  if (_parameter_update_sub.updated()) {
     parameter_update_s pupdate;
     _parameter_update_sub.copy(&pupdate);
 
     ModuleParams::updateParams();
   }
-
 }
 
-void QuadControl::Run()
-{
+void QuadControl::Run() {
 
   if (should_exit()) {
     _ang_vel_sub.unregisterCallback();
@@ -55,108 +45,107 @@ void QuadControl::Run()
   perf_begin(_cycle_perf);
 
   // do things
-  if (_ang_vel_sub.updated()){
+  if (_ang_vel_sub.updated()) {
 
     // check arming
-    if (_vehicle_status_sub.update(&_vehicle_status)){
-      _armed = _vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED;
+    if (_vehicle_status_sub.update(&_vehicle_status)) {
+      _armed =
+          _vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED;
     }
 
-    if (_armed){
+    if (_armed) {
 
       // grab states
-      if (_ang_vel_sub.update(&_state_ang_vel)){
+      if (_ang_vel_sub.update(&_state_ang_vel)) {
         _controller.update_state_Omega(_state_ang_vel);
         _init_state_Omega = true;
       }
 
-      if (_local_pos_sub.update(&_state_pos)){
+      if (_local_pos_sub.update(&_state_pos)) {
         _controller.update_state_pos(_state_pos);
         _init_state_pos = true;
       }
 
-      if (_att_sub.update(&_state_att)){
+      if (_att_sub.update(&_state_att)) {
         _controller.update_state_attitude(_state_att);
         _init_state_att = true;
       }
-      
-      if (_acc_sub.update(&_state_acc)){
-        _controller.update_state_acc(_state_acc);
-        _init_state_acc = true;
-      }
+
+      // if (_acc_sub.update(&_state_acc)){
+      //  _controller.update_state_acc(_state_acc);
+      //  _init_state_acc = true;
+      //}
 
       // grab setpoint
-      if (_trajectory_setpoint_sub.update(&_setpoint)){
+      if (_trajectory_setpoint_sub.update(&_setpoint)) {
         _controller.update_setpoint(_setpoint);
         _init_setpoint = true;
       }
 
-      _initialized = _init_state_Omega && _init_state_pos && _init_state_att && _init_state_acc && _init_setpoint;
-
+      //_initialized = _init_state_Omega && _init_state_pos && _init_state_att
+      //&& _init_state_acc && _init_setpoint;
+      _initialized = _init_state_Omega && _init_state_pos && _init_state_att &&
+                     _init_setpoint;
     }
 
-    if (_armed && !_initialized){
+    if (_armed && !_initialized) {
       PX4_WARN("ARMED not INITIALIZED");
     }
 
-    if (_armed && _initialized){
+    if (_armed && _initialized) {
 
       // run controller
       _controller.run();
 
       // get thrust and torque command
       float thrust_cmd = _controller.get_thrust_cmd();
-      thrust_cmd = (thrust_cmd < 0) ? 0.0 : thrust_cmd; // prevent it from trying to be negative;
+      thrust_cmd = (thrust_cmd < 0)
+                       ? 0
+                       : thrust_cmd; // prevent it from trying to be negative;
       Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
-      //PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd, (double)torque_cmd.norm());
+      // PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd,
+      // (double)torque_cmd.norm());
 
       // do the mixing
       Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
-      
+
       // publish
       publish_cmd(pwm_cmd);
-
     }
-
   }
 
   perf_end(_cycle_perf);
 }
 
-void QuadControl::publish_cmd(Vector4f pwm_cmd)
-{
+void QuadControl::publish_cmd(Vector4f pwm_cmd) {
 
   actuator_outputs_s msg;
   msg.timestamp = hrt_absolute_time();
   msg.noutputs = 4;
-  for (size_t i=0; i<4; i++){
+  for (size_t i = 0; i < 4; i++) {
     msg.output[i] = pwm_cmd(i);
   }
 
   _actuator_outputs_pub.publish(msg);
-  
 
   // now publish for sitl
-  for (size_t i=0; i<4; i++){
-    msg.output[i] = (pwm_cmd(i)-1000.0f)/1000.0f;
+  for (size_t i = 0; i < 4; i++) {
+    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   }
 
   _actuator_outputs_sim_pub.publish(msg);
-
 }
 
-
-int QuadControl::task_spawn(int argc, char* argv[])
-{
+int QuadControl::task_spawn(int argc, char *argv[]) {
 
   QuadControl *instance = new QuadControl();
 
-  if (instance){
+  if (instance) {
     _object.store(instance);
     _task_id = task_id_is_work_queue;
 
-    if (instance->init()){
+    if (instance->init()) {
       return PX4_OK;
     }
 
@@ -171,12 +160,11 @@ int QuadControl::task_spawn(int argc, char* argv[])
   return PX4_ERROR;
 }
 
-int QuadControl::custom_command(int argc, char* argv[])
-{
+int QuadControl::custom_command(int argc, char *argv[]) {
   return print_usage("unknown command");
 }
 
-int QuadControl::print_usage(const char * reason){
+int QuadControl::print_usage(const char *reason) {
 
   if (reason) {
     PX4_WARN("%s\n", reason);
@@ -188,44 +176,13 @@ int QuadControl::print_usage(const char * reason){
 Quadrotor controller
 )DESCR_STR");
 
-    PRINT_MODULE_USAGE_NAME("quad_control", "controller");
-    PRINT_MODULE_USAGE_COMMAND("start");
-    PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
+  PRINT_MODULE_USAGE_NAME("quad_control", "controller");
+  PRINT_MODULE_USAGE_COMMAND("start");
+  PRINT_MODULE_USAGE_DEFAULT_COMMANDS();
 
-    return 0;
-
+  return 0;
 }
 
-extern "C" __EXPORT int quad_control_main(int argc, char* argv[])
-{
+extern "C" __EXPORT int quad_control_main(int argc, char *argv[]) {
   return QuadControl::main(argc, argv);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

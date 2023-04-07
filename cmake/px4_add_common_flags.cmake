@@ -147,7 +147,7 @@ function(px4_add_common_flags)
 		-fno-common
 
 		-Wnested-externs
-		-Wnostrict-prototypes # TODO: fix and enable
+		-Wno-strict-prototypes # TODO: fix and enable
 	)
 	foreach(flag ${c_flags})
 		add_compile_options($<$<COMPILE_LANGUAGE:C>:${flag}>)
