@@ -72,9 +72,9 @@ private:
   vehicle_acceleration_s _state_acc;
   vehicle_angular_velocity_s _state_ang_vel;
   trajectory_setpoint_s _setpoint;
+  commander_status_s _commander_status;
 
   GeometricController _controller;
-  // IndiGeometricController _controller;
   MixerLinear _mixer;
 
   bool _armed = false;
@@ -84,6 +84,8 @@ private:
   bool _init_state_att = false;
   bool _init_state_acc = false;
   bool _init_setpoint = false;
+  bool _init_commander_status = false;
+
   hrt_abstime _timestamp_last_loop{0};
   perf_counter_t _cycle_perf{
       perf_alloc(PC_ELAPSED, MODULE_NAME ": cycle time")};

@@ -44,78 +44,99 @@ void QuadControl::Run() {
 
   perf_begin(_cycle_perf);
 
-  // do things
-  if (_ang_vel_sub.updated()) {
-
-    // check arming
-    if (_vehicle_status_sub.update(&_vehicle_status)) {
-      _armed =
-          _vehicle_status.arming_state == vehicle_status_s::ARMING_STATE_ARMED;
-    }
-
-    if (_armed) {
-
-      // grab states
-      if (_ang_vel_sub.update(&_state_ang_vel)) {
-        _controller.update_state_Omega(_state_ang_vel);
-        _init_state_Omega = true;
-      }
-
-      if (_local_pos_sub.update(&_state_pos)) {
-        _controller.update_state_pos(_state_pos);
-        _init_state_pos = true;
-      }
-
-      if (_att_sub.update(&_state_att)) {
-        _controller.update_state_attitude(_state_att);
-        _init_state_att = true;
-      }
-
-      // if (_acc_sub.update(&_state_acc)){
-      //  _controller.update_state_acc(_state_acc);
-      //  _init_state_acc = true;
-      //}
-
-      // grab setpoint
-      if (_trajectory_setpoint_sub.update(&_setpoint)) {
-        _controller.update_setpoint(_setpoint);
-        _init_setpoint = true;
-      }
-
-      //_initialized = _init_state_Omega && _init_state_pos && _init_state_att
-      //&& _init_state_acc && _init_setpoint;
-      _initialized = _init_state_Omega && _init_state_pos && _init_state_att &&
-                     _init_setpoint;
-    }
-
-    if (_armed && !_initialized) {
-      PX4_WARN("ARMED not INITIALIZED");
-    }
-
-    if (_armed && _initialized) {
-
-      // run controller
-      _controller.run();
-
-      // get thrust and torque command
-      float thrust_cmd = _controller.get_thrust_cmd();
-      thrust_cmd = (thrust_cmd < 0)
-                       ? 0
-                       : thrust_cmd; // prevent it from trying to be negative;
-      Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
-
-      // PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd,
-      // (double)torque_cmd.norm());
-
-      // do the mixing
-      Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
-
-      // publish
-      publish_cmd(pwm_cmd);
-    }
+  if (!_ang_vel_sub.updated()) {
+    perf_end(_cycle_perf);
+    return;
   }
 
-  perf_end(_cycle_perf);
+  // do things only if ang_vel updated:
+
+  // grab commander status
+  if (_commander_status_sub.update(&_commander_status)) {
+    _init_commander_status = true;
+
+    _armed = _commander_status != commander_status_s::STATE_DISARMED;
+  }
+
+  if (!_armed) {
+    perf_end(_cycle_perf);
+    return;
+  }
+
+  // update other subscribers
+  if (_ang_vel_sub.update(&_state_ang_vel)) {
+    _controller.update_state_Omega(_state_ang_vel);
+    _init_state_Omega = true;
+  }
+
+  if (_local_pos_sub.update(&_state_pos)) {
+    _controller.update_state_pos(_state_pos);
+    _init_state_pos = true;
+  }
+
+  if (_att_sub.update(&_state_att)) {
+    _controller.update_state_attitude(_state_att);
+    _init_state_att = true;
+  }
+
+  if (_trajectory_setpoint_sub.update(&_setpoint)) {
+    _controller.update_setpoint(_setpoint);
+    _init_setpoint = true;
+  }
+
+  _initialized = _init_state_Omega && _init_state_pos && _init_state_att &&
+                 _init_setpoint && _init_commander_status;
+
+  if (!_initialized) {
+    PX4_WARN("ARMED but not INITIALIZED");
+    perf_end(_cycle_perf);
+    return;
+  }
+
+  // if in armed mode, publish the min PWM
+  if (_commander_status.state == commander_status_s::STATE_ARMED) {
+    float v = 1100.0;
+    Vector4f pwm_cmd(v, v, v, v);
+    publish_cmd(pwm_cmd);
+    perf_end(_cycle_perf);
+    return;
+  }
+
+  // if in land mode, modify the setpoint
+  if (_commander_status.state == commander_status_s::STATE_LAND) {
+    for (size_t i = 0; i < 3; i++) {
+      _setpoint.position[i] = NAN;
+      _setpoint.velocity[i] = 0;
+      _setpoint.acceleration[i] = 0;
+      _setpoint.jerk[i] = 0;
+    }
+    _setpoint.yaw = NAN;
+    _setpoint.yaw_speed = 0;
+    _setpoint.velocity[2] = -0.2; // m/s
+    _controller.update_setpoint(_setpoint);
+  }
+
+  // run controller
+  _controller.run();
+
+  // get thrust and torque command
+  float thrust_cmd = _controller.get_thrust_cmd();
+  thrust_cmd = (thrust_cmd < 0) ? 0 : thrust_cmd;
+  Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
+
+  // PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd,
+  // (double)torque_cmd.norm());
+
+  // do the mixing
+  Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
+
+  // publish
+  publish_cmd(pwm_cmd);
+}
+
+perf_end(_cycle_perf);
+
+return;
 }
 
 void QuadControl::publish_cmd(Vector4f pwm_cmd) {

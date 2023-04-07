@@ -32,7 +32,7 @@ void SimpleCommander::run() {
     if (_trajectory_setpoint_sub.updated()) {
       trajectory_setpoint_s sp;
       _trajectory_setpoint_sub.copy(&sp);
-      _last_timestamp_offboard = sp.timestamp;
+      _last_timestamp_offboard = hrt_absolute_time();
     }
 
     // check for commands
@@ -99,7 +99,6 @@ bool SimpleCommander::set_state(VehicleState new_state) {
       return false;
     }
 
-    // TODO(dev): check if offboard mode messages have been recevied.
     if (hrt_elapsed_time(&_last_timestamp_offboard) > 50_ms) {
       PX4_WARN("OFFBOARD MODE DENIED! Vehicle has not received offboard "
                "control messages");
