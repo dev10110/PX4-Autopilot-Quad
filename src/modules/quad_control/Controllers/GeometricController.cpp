@@ -60,23 +60,25 @@ void GeometricController::update_setpoint(trajectory_setpoint_s sp) {
     s_ref(i) = 0.0f;
   }
 
-  yaw_ref = sp.yaw;
-  yaw_vel_ref = sp.yawspeed;
+  x_ref.print("sp");
+
+  yaw_ref = -sp.yaw;
+  yaw_vel_ref = -sp.yawspeed;
   yaw_acc_ref = 0.0f;
 
   // do the flat state to trajectory setpoint conversion
-  // flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref,
-  // j_ref, s_ref,  yaw_ref, yaw_vel_ref, yaw_acc_ref);
+  flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref,
+  j_ref, s_ref,  yaw_ref, yaw_vel_ref, yaw_acc_ref);
 
-  // TODO(dev): update
-  yaw_ref = sp.yaw; // desired yaw
-  b1_ref(0) = std::cos(yaw_ref);
-  b1_ref(1) = std::sin(yaw_ref);
-  b1_ref(2) = 0.0;
+  //// TODO(dev): update
+  //yaw_ref = sp.yaw; // desired yaw
+  //b1_ref(0) = std::cos(yaw_ref);
+  //b1_ref(1) = std::sin(yaw_ref);
+  //b1_ref(2) = 0.0;
 
-  // TODO(dev): update
-  Omega_ref.setZero();
-  alpha_ref.setZero();
+  //// TODO(dev): update
+  //Omega_ref.setZero();
+  //alpha_ref.setZero();
 }
 
 // Run the controller
@@ -87,10 +89,10 @@ void GeometricController::run() {
 
   const Vector3f e3(0, 0, 1);
 
-  Vector3f ex = x - x_ref;
+  Vector3f ex = (x - x_ref).zero_if_nan();
   Vector3f ev = v - v_ref;
 
-  ex.print();
+  ex.print("ex");
 
   Vector3f thrust = -kx * ex - kv * ev - m * g * e3 + m * a_ref;
 

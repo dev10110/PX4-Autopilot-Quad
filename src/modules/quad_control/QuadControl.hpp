@@ -22,6 +22,7 @@
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/commander_status.h>
 
 #include "Controllers/GeometricController.hpp"
 #include "Controllers/IndiGeometricController.hpp"
@@ -55,6 +56,7 @@ private:
       ORB_ID(actuator_outputs_sim)};
 
   // Subscriptions
+  uORB::Subscription _commander_status_sub{ORB_ID(commander_status)};
   uORB::Subscription _vehicle_status_sub{ORB_ID(vehicle_status)};
   uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
   uORB::Subscription _local_pos_sub{ORB_ID(vehicle_local_position)};
@@ -68,6 +70,7 @@ private:
   // Private Variables:
   vehicle_status_s _vehicle_status;
   vehicle_local_position_s _state_pos;
+  vehicle_local_position_s _start_landing_state;
   vehicle_attitude_s _state_att;
   vehicle_acceleration_s _state_acc;
   vehicle_angular_velocity_s _state_ang_vel;
@@ -87,6 +90,7 @@ private:
   bool _init_commander_status = false;
 
   hrt_abstime _timestamp_last_loop{0};
+  hrt_abstime _last_timestamp_land_started{0};
   perf_counter_t _cycle_perf{
       perf_alloc(PC_ELAPSED, MODULE_NAME ": cycle time")};
 

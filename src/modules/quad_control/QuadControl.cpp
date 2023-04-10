@@ -55,10 +55,13 @@ void QuadControl::Run() {
   if (_commander_status_sub.update(&_commander_status)) {
     _init_commander_status = true;
 
-    _armed = _commander_status != commander_status_s::STATE_DISARMED;
+    _armed = _commander_status.state != commander_status_s::STATE_DISARMED;
   }
 
   if (!_armed) {
+    float v = 0;
+    Vector4f pwm_cmd(v, v, v, v);
+    publish_cmd(pwm_cmd);
     perf_end(_cycle_perf);
     return;
   }
@@ -71,6 +74,13 @@ void QuadControl::Run() {
 
   if (_local_pos_sub.update(&_state_pos)) {
     _controller.update_state_pos(_state_pos);
+
+    // if the mode is not landing, update the landing state
+    if (_init_commander_status && _commander_status.state != commander_status_s::STATE_LAND)
+    {
+      _local_pos_sub.copy(&_start_landing_state);
+      _last_timestamp_land_started = hrt_absolute_time();
+    }
     _init_state_pos = true;
   }
 
@@ -88,6 +98,9 @@ void QuadControl::Run() {
                  _init_setpoint && _init_commander_status;
 
   if (!_initialized) {
+    float v = 0;
+    Vector4f pwm_cmd(v, v, v, v);
+    publish_cmd(pwm_cmd);
     PX4_WARN("ARMED but not INITIALIZED");
     perf_end(_cycle_perf);
     return;
@@ -102,17 +115,28 @@ void QuadControl::Run() {
     return;
   }
 
+
   // if in land mode, modify the setpoint
   if (_commander_status.state == commander_status_s::STATE_LAND) {
+
+   
+    // initialize setpoint to 0 
     for (size_t i = 0; i < 3; i++) {
-      _setpoint.position[i] = NAN;
       _setpoint.velocity[i] = 0;
       _setpoint.acceleration[i] = 0;
       _setpoint.jerk[i] = 0;
     }
-    _setpoint.yaw = NAN;
-    _setpoint.yaw_speed = 0;
-    _setpoint.velocity[2] = -0.2; // m/s
+    _setpoint.yawspeed = 0;
+    
+    float land_speed = 0.2; // m/s
+
+    float t = (float)(1e-6) *  (float)hrt_elapsed_time(&_last_timestamp_land_started);
+    
+    _setpoint.position[0] = _start_landing_state.x;
+    _setpoint.position[1] = _start_landing_state.y;
+    _setpoint.position[2] = _start_landing_state.z - land_speed * t;
+    _setpoint.yaw = _start_landing_state.heading;
+    _setpoint.velocity[2] = -land_speed;
     _controller.update_setpoint(_setpoint);
   }
 
@@ -132,11 +156,11 @@ void QuadControl::Run() {
 
   // publish
   publish_cmd(pwm_cmd);
-}
 
-perf_end(_cycle_perf);
 
-return;
+  perf_end(_cycle_perf);
+
+  return;
 }
 
 void QuadControl::publish_cmd(Vector4f pwm_cmd) {

@@ -72,6 +72,7 @@ bool SimpleCommander::set_state(VehicleState new_state) {
 
   switch (new_state) {
   case VehicleState::DISARMED:
+	  PX4_WARN("RECEIVED REQUEST TO DISARM");
     _state = VehicleState::DISARMED;
     publish_status();
     return true;

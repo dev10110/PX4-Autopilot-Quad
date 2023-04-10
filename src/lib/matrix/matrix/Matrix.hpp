@@ -371,6 +371,15 @@ public:
 		write_string(string, n);
 		printf("%s\n", string);
 	}
+	
+	void print(std::string label) const
+	{
+		// element: tab, point, 8 digits, 4 scientific notation chars; row: newline; string: \0 end
+		static const size_t n = 15 * N * M + M + 1;
+		char string[n];
+		write_string(string, n);
+		printf("%s: %s\n", label.c_str(), string);
+	}
 
 	Matrix<Type, N, M> transpose() const
 	{
