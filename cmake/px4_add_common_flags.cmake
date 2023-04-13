@@ -89,8 +89,8 @@ function(px4_add_common_flags)
 		-Wno-missing-field-initializers
 		-Wno-missing-include-dirs # TODO: fix and enable
 		-Wno-unused-parameter
-		-Wno-deprecated-declarations # TODO: fix and enable
-		-Wno-unused-but-set-variable # TODO: fix and enable
+		#-Wno-deprecated-declarations # TODO: fix and enable
+		#-Wno-unused-but-set-variable # TODO: fix and enable
 
 		)
 
@@ -147,7 +147,7 @@ function(px4_add_common_flags)
 		-fno-common
 
 		-Wnested-externs
-		-Wno-strict-prototypes # TODO: fix and enable
+		-Wstrict-prototypes # TODO: fix and enable
 	)
 	foreach(flag ${c_flags})
 		add_compile_options($<$<COMPILE_LANGUAGE:C>:${flag}>)
