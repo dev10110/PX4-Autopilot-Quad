@@ -16,6 +16,48 @@ SimpleCommander::~SimpleCommander() {
   // perf_free();
 }
 
+void SimpleCommander::handle_parameter_req() {
+
+  // grab the request message
+  parameter_req_s req;
+  _parameter_req_sub.copy(&req);
+
+  // find the param
+  char name[17];
+  strncpy(name, req.param_name, 16);
+  name[16] = '\0'; // null terminate the string;
+  param_t param = param_find_no_notification(name);
+  if (param == PARAM_INVALID) {
+    PX4_ERR("unknown param: %s", name);
+    return;
+  }
+
+  // check if the value should be set
+  if (req.set) {
+    PX4_INFO("setting param %s to %f", name, (double)(req.value));
+    param_set(param, &req.value);
+  }
+
+  // publish the current value
+  parameter_res_s res;
+  strncpy(res.param_name, req.param_name, 16);
+  if (param_type(param) == PARAM_TYPE_INT32) {
+    int32_t param_value;
+    param_get(param, &param_value);
+    res.value = param_value;
+    res.is_int32 = true;
+    PX4_INFO("param %s is  %f", name, (double)param_value);
+  } else {
+    float param_value;
+    param_get(param, &param_value);
+    res.value = param_value;
+    res.is_int32 = false;
+    PX4_INFO("param %s is %f", name, (double)param_value);
+  }
+
+  _parameter_res_pub.publish(res);
+}
+
 void SimpleCommander::run() {
 
   while (!should_exit()) {
@@ -26,6 +68,11 @@ void SimpleCommander::run() {
       parameter_update_s update;
       _parameter_update_sub.copy(&update);
       updateParams();
+    }
+
+    // check for parameter get/set
+    if (_parameter_req_sub.updated()) {
+      handle_parameter_req();
     }
 
     // check for offboard messages
@@ -72,7 +119,7 @@ bool SimpleCommander::set_state(VehicleState new_state) {
 
   switch (new_state) {
   case VehicleState::DISARMED:
-	  PX4_WARN("RECEIVED REQUEST TO DISARM");
+    PX4_WARN("RECEIVED REQUEST TO DISARM");
     _state = VehicleState::DISARMED;
     publish_status();
     return true;

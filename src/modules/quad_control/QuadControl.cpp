@@ -134,9 +134,9 @@ void QuadControl::Run() {
     
     _setpoint.position[0] = _start_landing_state.x;
     _setpoint.position[1] = _start_landing_state.y;
-    _setpoint.position[2] = _start_landing_state.z - land_speed * t;
+    _setpoint.position[2] = _start_landing_state.z + land_speed * t;
     _setpoint.yaw = _start_landing_state.heading;
-    _setpoint.velocity[2] = -land_speed;
+    _setpoint.velocity[2] = land_speed;
     _controller.update_setpoint(_setpoint);
   }
 

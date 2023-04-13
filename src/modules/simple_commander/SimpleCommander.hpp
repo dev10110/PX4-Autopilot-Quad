@@ -7,6 +7,7 @@
 #include <uORB/Publication.hpp>
 #include <uORB/topics/actuator_armed.h>
 #include <uORB/topics/commander_status.h>
+#include <uORB/topics/parameter_res.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_control_mode.h>
 #include <uORB/topics/vehicle_status.h>
@@ -15,6 +16,7 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionInterval.hpp>
 #include <uORB/topics/commander_set_state.h>
+#include <uORB/topics/parameter_req.h>
 #include <uORB/topics/parameter_update.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_local_position.h>
@@ -54,6 +56,7 @@ private:
   bool handle_command_disarm();
   bool handle_command_offboard();
   bool handle_command_land();
+  void handle_parameter_req();
 
   bool set_state(VehicleState new_state);
   void run_state_machine();
@@ -72,6 +75,7 @@ private:
       ORB_ID(vehicle_status)};
   uORB::Publication<commander_status_s> _commander_status_pub{
       ORB_ID(commander_status)};
+  uORB::Publication<parameter_res_s> _parameter_res_pub{ORB_ID(parameter_res)};
 
   // Subscribers
   uORB::SubscriptionInterval _parameter_update_sub{ORB_ID(parameter_update),
@@ -80,6 +84,7 @@ private:
       ORB_ID(vehicle_local_position)};
   uORB::Subscription _trajectory_setpoint_sub{ORB_ID(trajectory_setpoint)};
   uORB::Subscription _commander_set_state_sub{ORB_ID(commander_set_state)};
+  uORB::Subscription _parameter_req_sub{ORB_ID(parameter_req)};
 
   VehicleState _state = VehicleState::DISARMED;
   hrt_abstime _boot_timestamp;
