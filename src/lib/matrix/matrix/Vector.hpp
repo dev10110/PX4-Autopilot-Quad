@@ -154,11 +154,6 @@ public:
 		(*this).transpose().print();
 	}
 	
-	void print(std::string label) const
-	{
-		(*this).transpose().print(label);
-	}
-	
 	Vector zero_if_nan() const
 	{
 

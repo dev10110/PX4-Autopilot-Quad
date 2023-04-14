@@ -1,7 +1,6 @@
 #pragma once
 
 #include <assert.h>
-#include <string>
 #include <px4_platform_common/defines.h>
 
 #include "helper_functions.hpp"
