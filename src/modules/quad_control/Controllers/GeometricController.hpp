@@ -15,7 +15,8 @@ class GeometricController {
 public:
   GeometricController();
 
-  void set_gains();
+  void set_gains(float _kx=1.0f, float _kv=2.0f, float _kI=0.01f, float _kR=0.35f, float _kOmega=0.15f, float _m=1.5f, float _Jxx=0.005, float _Jyy=0.005, float _Jzz=0.009); 
+  void reset_integral();
   void update_state_pos(vehicle_local_position_s pos);
   void update_state_attitude(vehicle_attitude_s att);
   void update_state_Omega(vehicle_angular_velocity_s ang_vel);
@@ -27,12 +28,12 @@ public:
 
 private:
   // PARAMETERS
-  float kx, kv, kR, kOmega;
+  float kx, kv, ki, kR, kOmega;
   float m, g;
   SquareMatrix<float, 3> J;
 
   // STATE
-  Vector3f x, v, Omega;
+  Vector3f x, v, Omega, ei;
   Dcmf R;
 
   // SETPOINT

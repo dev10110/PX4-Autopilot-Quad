@@ -7,24 +7,30 @@
 
 using namespace matrix;
 
-GeometricController::GeometricController() { set_gains(); }
-
-void GeometricController::set_gains() {
-
-  kx = 1.0f;
-  kv = 2.0f;
-  kR = 0.35f;
-  kOmega = 0.15f;
-
-  m = 0.9f; // THE QUAD ACTUALLY WEIGHS 0.8f; this should should up as a wrong
-            // altitude, Geometric controller cant fix it, but the IndiGeometric
-            // should;
-  g = 9.81f;
-  J.setZero();
-  J(0, 0) = 0.005;
-  J(1, 1) = 0.005;
-  J(2, 2) = 0.009;
+GeometricController::GeometricController() { 
+	set_gains(); 
+	reset_integral();
 }
+
+void GeometricController::set_gains(float _kx, float _kv, float _ki, float _kR, float _kOmega, float _m, float _Jxx, float _Jyy, float _Jzz) {
+  
+  g = 9.81f;
+
+  kx = _kx; // 1.0f;
+  kv = _kv; // 2.0f;
+  ki = _ki; // 0.05f;
+  kR = _kR; //0.35f;
+  kOmega = _kOmega; // 0.15f;
+
+  m = _m; // 1.5f;
+  
+  J.setZero();
+  J(0, 0) = _Jxx; // 0.005;
+  J(1, 1) = _Jyy; // 0.005;
+  J(2, 2) = _Jzz; // 0.009;
+}
+
+void GeometricController::reset_integral(){ ei.setZero(); }
 
 void GeometricController::update_state_pos(vehicle_local_position_s pos) {
   // grab pos and vel
@@ -60,8 +66,6 @@ void GeometricController::update_setpoint(trajectory_setpoint_s sp) {
     s_ref(i) = 0.0f;
   }
 
-  x_ref.print("sp");
-
   yaw_ref = -sp.yaw;
   yaw_vel_ref = -sp.yawspeed;
   yaw_acc_ref = 0.0f;
@@ -70,15 +74,6 @@ void GeometricController::update_setpoint(trajectory_setpoint_s sp) {
   flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref,
   j_ref, s_ref,  yaw_ref, yaw_vel_ref, yaw_acc_ref);
 
-  //// TODO(dev): update
-  //yaw_ref = sp.yaw; // desired yaw
-  //b1_ref(0) = std::cos(yaw_ref);
-  //b1_ref(1) = std::sin(yaw_ref);
-  //b1_ref(2) = 0.0;
-
-  //// TODO(dev): update
-  //Omega_ref.setZero();
-  //alpha_ref.setZero();
 }
 
 // Run the controller
@@ -91,10 +86,25 @@ void GeometricController::run() {
 
   Vector3f ex = (x - x_ref).zero_if_nan();
   Vector3f ev = v - v_ref;
+  
+  // prevent too large ex:
+  if (ex.norm() > 2){
+	  ex = 2.0f * ex / ex.norm();
+  }
 
-  ex.print("ex");
-
-  Vector3f thrust = -kx * ex - kv * ev - m * g * e3 + m * a_ref;
+  // prevent too large ev:
+  if (ev.norm() > 5){
+	  ev = 5.0f * ev / ev.norm();
+  }
+  
+  // increment the integral error 
+  ei += ex; 
+  // prevent windup
+  for (size_t i=0; i<3;i++){
+	  ei(i) = (ei(i) > 2.0f/ki) ? 2.0f/ki : ei(i);
+	  ei(i) = (ei(i) < -2.0f/ki) ? -2.0f/ki : ei(i);
+  }
+  Vector3f thrust = -kx * ex - kv * ev - ki * ei - m * g * e3 + m * a_ref;
 
   Vector3f b3d = -thrust.unit();
   Vector3f b2d = (b3d.cross(b1_ref)).unit();

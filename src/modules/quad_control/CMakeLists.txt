@@ -7,6 +7,8 @@ px4_add_module(
     QuadControl.hpp
     Controllers/MixerLinear.hpp
     Controllers/MixerLinear.cpp
+    Controllers/MixerQuadratic.hpp
+    Controllers/MixerQuadratic.cpp
     Controllers/GeometricController.hpp
     Controllers/GeometricController.cpp
     Controllers/IndiGeometricController.hpp

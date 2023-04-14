@@ -27,6 +27,7 @@
 #include "Controllers/GeometricController.hpp"
 #include "Controllers/IndiGeometricController.hpp"
 #include "Controllers/MixerLinear.hpp"
+#include "Controllers/MixerQuadratic.hpp"
 
 using namespace time_literals;
 using namespace matrix;
@@ -78,7 +79,10 @@ private:
   commander_status_s _commander_status;
 
   GeometricController _controller;
-  MixerLinear _mixer;
+  //MixerLinear _mixer;
+  MixerQuadratic _mixer;
+
+  float _land_speed = 0.2f;
 
   bool _armed = false;
   bool _initialized = false;
@@ -94,6 +98,19 @@ private:
   perf_counter_t _cycle_perf{
       perf_alloc(PC_ELAPSED, MODULE_NAME ": cycle time")};
 
-  // DEFINE_PARAMETERS(
-  // )
+  DEFINE_PARAMETERS(
+	(ParamFloat<px4::params::QUAD_KX>) _param_quad_kx,
+	(ParamFloat<px4::params::QUAD_KV>) _param_quad_kv,
+	(ParamFloat<px4::params::QUAD_KI>) _param_quad_ki,
+	(ParamFloat<px4::params::QUAD_KR>) _param_quad_kR,
+	(ParamFloat<px4::params::QUAD_KOMEGA>) _param_quad_kOmega,
+	(ParamFloat<px4::params::QUAD_M>) _param_quad_m,
+	(ParamFloat<px4::params::QUAD_JXX>) _param_quad_Jxx,
+	(ParamFloat<px4::params::QUAD_JYY>) _param_quad_Jyy,
+	(ParamFloat<px4::params::QUAD_JZZ>) _param_quad_Jzz,
+	(ParamFloat<px4::params::QUAD_KTHRUST>) _param_quad_kThrust,
+	(ParamFloat<px4::params::QUAD_KTORQUE>) _param_quad_kTorque,
+	(ParamFloat<px4::params::QUAD_OMEGA_MAX>) _param_quad_omegaMax,
+	(ParamFloat<px4::params::QUAD_LAND_SPEED>) _param_quad_land_speed
+  )
 };

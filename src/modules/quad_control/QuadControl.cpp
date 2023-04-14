@@ -24,6 +24,8 @@ bool QuadControl::init() {
   return true;
 }
 
+
+
 void QuadControl::parameters_update() {
   // check for parameter updates
   if (_parameter_update_sub.updated()) {
@@ -31,6 +33,28 @@ void QuadControl::parameters_update() {
     _parameter_update_sub.copy(&pupdate);
 
     ModuleParams::updateParams();
+ 
+    PX4_WARN("updateParams");
+
+    // update parameters in controllers
+    _controller.set_gains(
+		    _param_quad_kx.get(),
+		    _param_quad_kv.get(),
+		    _param_quad_ki.get(),
+		    _param_quad_kR.get(),
+		    _param_quad_kOmega.get(),
+		    _param_quad_m.get(),
+		    _param_quad_Jxx.get(),
+		    _param_quad_Jyy.get(),
+		    _param_quad_Jzz.get()
+		    );
+
+    _mixer.set_thrust_coeff(_param_quad_kThrust.get());
+    _mixer.set_torque_coeff(_param_quad_kTorque.get());
+    _mixer.set_omega_max(_param_quad_omegaMax.get());
+
+    _land_speed = _param_quad_land_speed.get();
+
   }
 }
 
@@ -49,6 +73,8 @@ void QuadControl::Run() {
     return;
   }
 
+  parameters_update();
+
   // do things only if ang_vel updated:
 
   // grab commander status
@@ -60,6 +86,7 @@ void QuadControl::Run() {
 
   if (!_armed) {
     float v = 0;
+    _controller.reset_integral();
     Vector4f pwm_cmd(v, v, v, v);
     publish_cmd(pwm_cmd);
     perf_end(_cycle_perf);
@@ -98,6 +125,7 @@ void QuadControl::Run() {
                  _init_setpoint && _init_commander_status;
 
   if (!_initialized) {
+    _controller.reset_integral();
     float v = 0;
     Vector4f pwm_cmd(v, v, v, v);
     publish_cmd(pwm_cmd);
@@ -108,6 +136,7 @@ void QuadControl::Run() {
 
   // if in armed mode, publish the min PWM
   if (_commander_status.state == commander_status_s::STATE_ARMED) {
+    _controller.reset_integral();
     float v = 1100.0;
     Vector4f pwm_cmd(v, v, v, v);
     publish_cmd(pwm_cmd);
@@ -128,15 +157,13 @@ void QuadControl::Run() {
     }
     _setpoint.yawspeed = 0;
     
-    float land_speed = 0.2; // m/s
-
     float t = (float)(1e-6) *  (float)hrt_elapsed_time(&_last_timestamp_land_started);
     
     _setpoint.position[0] = _start_landing_state.x;
     _setpoint.position[1] = _start_landing_state.y;
-    _setpoint.position[2] = _start_landing_state.z + land_speed * t;
+    _setpoint.position[2] = _start_landing_state.z + _land_speed * t;
     _setpoint.yaw = _start_landing_state.heading;
-    _setpoint.velocity[2] = land_speed;
+    _setpoint.velocity[2] = _land_speed;
     _controller.update_setpoint(_setpoint);
   }
 
@@ -148,15 +175,11 @@ void QuadControl::Run() {
   thrust_cmd = (thrust_cmd < 0) ? 0 : thrust_cmd;
   Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
-  // PX4_INFO("Thrust_cmd: %f, Torque_cmd: %f", (double)thrust_cmd,
-  // (double)torque_cmd.norm());
-
   // do the mixing
   Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
 
   // publish
   publish_cmd(pwm_cmd);
-
 
   perf_end(_cycle_perf);
 
