@@ -86,6 +86,7 @@ void SimpleCommander::run() {
     if (_commander_set_state_sub.updated()) {
       commander_set_state_s msg;
       _commander_set_state_sub.copy(&msg);
+
       if (msg.new_state == commander_set_state_s::STATE_DISARMED) {
         set_state(VehicleState::DISARMED);
       }
@@ -100,6 +101,7 @@ void SimpleCommander::run() {
       }
     }
 
+    // publish arming status
     if (hrt_elapsed_time(&_last_arm_status_pub) > 500_ms) {
       publish_status();
     }
@@ -242,31 +244,12 @@ void SimpleCommander::run_state_machine() {
   switch (_state) {
 
   case VehicleState::DISARMED:
-    // set_state(VehicleState::ARMED);
-
-    // // check if arming message received
-    // bool arming_msg_received =  true;
-    // if (arming_msg_received){
-    //     set_state(VehicleState::ARMED);
-    // }
-
     return;
 
   case VehicleState::ARMED:
-    // set_state(VehicleState::OFFBOARD);
-
-    // // check if offboard message received
-    // bool offboard_msg_received =  true;
-    //
-    // if (offboard_msg_received){
-    //     set_state(VehicleState::OFFBOARD);
-    // }
-
     return;
 
   case VehicleState::OFFBOARD:
-
-    // publish_takeoff_setpoint();
 
     // offboard control timeout
     if (hrt_elapsed_time(&_last_timestamp_offboard) > 200_ms) {
@@ -282,65 +265,12 @@ void SimpleCommander::run_state_machine() {
       set_state(VehicleState::DISARMED);
     }
 
-    // if (check_has_landed()) {
-    //  set_state(VehicleState::DISARMED);
-    //}
     return;
 
   default:
     // should never get here
     return;
   }
-}
-
-void SimpleCommander::publish_takeoff_setpoint() {
-
-  // publish offboard setpoint
-  trajectory_setpoint_s setpoint;
-  setpoint.timestamp = hrt_absolute_time();
-
-  for (int i = 0; i < 3; i++) {
-    setpoint.position[i] = 0.0;
-    setpoint.velocity[i] = 0.0;
-    setpoint.acceleration[i] = 0.0;
-    setpoint.jerk[i] = 0.0;
-  }
-  setpoint.position[2] = -4.0;
-  setpoint.yaw = 0.0;
-  setpoint.yawspeed = 0.0;
-
-  // // uncomment to do sinusoids in x and spins
-  // const auto elapsed_us = hrt_elapsed_time(&_last_timestamp_offboard);
-  // const float elapsed_s = (float)elapsed_us * (float)(1e-6);
-  // const float w = 2.0f * (float)M_PI / 10.0f;
-  // setpoint.position[0] = std::sinf(w * elapsed_s);
-  // setpoint.velocity[0] = w * std::cosf(w * elapsed_s);
-  // setpoint.acceleration[0] = -w*w * std::sinf(w * elapsed_s);
-  // setpoint.jerk[0] = -w*w*w*std::cosf(w * elapsed_s);
-  // setpoint.yaw = w * elapsed_s;
-  // setpoint.yawspeed = w;
-
-  // publish offboard command mode
-  // TODO: check if this is still needed
-  vehicle_control_mode_s mode;
-  mode.timestamp = hrt_absolute_time();
-  mode.flag_armed = true;
-
-  mode.flag_multicopter_position_control_enabled = true;
-  mode.flag_control_manual_enabled = false;
-  mode.flag_control_auto_enabled = false;
-  mode.flag_control_offboard_enabled = true;
-  mode.flag_control_rates_enabled = true;
-  mode.flag_control_attitude_enabled = true;
-  mode.flag_control_acceleration_enabled = true;
-  mode.flag_control_velocity_enabled = true;
-  mode.flag_control_position_enabled = true;
-  mode.flag_control_altitude_enabled = true;
-  mode.flag_control_climb_rate_enabled = true;
-  mode.flag_control_termination_enabled = false;
-
-  _vehicle_control_mode_pub.publish(mode);
-  _trajectory_setpoint_pub.publish(setpoint);
 }
 
 int SimpleCommander::print_status() {
@@ -401,6 +331,14 @@ bool SimpleCommander::preflight_check() {
   }
   _last_preflight_check = hrt_absolute_time();
 
+  // TODO: Add in all these checks!
+
+  // check EKF
+  if (!preflight_check_ekf()) {
+    PX4_WARN("EKF preflight check failed");
+    return false;
+  }
+  
   // check mag
   // check accel
   // check gyro
@@ -410,12 +348,6 @@ bool SimpleCommander::preflight_check() {
   // check airspeed sensor
   // check RC calibration
   // check system power
-
-  // check EKF
-  if (!preflight_check_ekf()) {
-    PX4_WARN("EKF preflight check failed");
-    return false;
-  }
 
   PX4_INFO("PREFLIGHT PASSED!");
   return true;

@@ -39,6 +39,7 @@ public:
   int print_status() override;
 
 private:
+  
   enum class VehicleState {
     DISARMED = 0, // disarmed state
     ARMED,    // armed state (i.e., received arming command and passed preflight
@@ -61,7 +62,6 @@ private:
   bool set_state(VehicleState new_state);
   void run_state_machine();
 
-  void publish_takeoff_setpoint();
   void publish_status();
 
   // Publishers
@@ -87,9 +87,9 @@ private:
   uORB::Subscription _parameter_req_sub{ORB_ID(parameter_req)};
 
   VehicleState _state = VehicleState::DISARMED;
-  hrt_abstime _boot_timestamp;
-  hrt_abstime _last_preflight_check;
-  hrt_abstime _last_arm_status_pub;
-  hrt_abstime _last_timestamp_offboard;
-  hrt_abstime _last_land_cmd_started;
+  hrt_abstime _boot_timestamp{0};
+  hrt_abstime _last_preflight_check{0};
+  hrt_abstime _last_arm_status_pub{0};
+  hrt_abstime _last_timestamp_offboard{0};
+  hrt_abstime _last_land_cmd_started{0};
 };

@@ -49,9 +49,19 @@ void QuadControl::parameters_update() {
 		    _param_quad_Jzz.get()
 		    );
 
+    // update mixer gains
     _mixer.set_thrust_coeff(_param_quad_kThrust.get());
     _mixer.set_torque_coeff(_param_quad_kTorque.get());
     _mixer.set_omega_max(_param_quad_omegaMax.get());
+
+    // set all the mixer geometry
+    _mixer.set_rotor(0, { _param_quad_rot1_pos_x.get(), _param_quad_rot1_pos_y.get(), 0}, -1);
+    _mixer.set_rotor(1, { _param_quad_rot2_pos_x.get(), _param_quad_rot2_pos_y.get(), 0}, -1);
+    _mixer.set_rotor(2, { _param_quad_rot3_pos_x.get(), _param_quad_rot3_pos_y.get(), 0}, 1);
+    _mixer.set_rotor(3, { _param_quad_rot4_pos_x.get(), _param_quad_rot4_pos_y.get(), 0}, 1);
+
+    // update the mixer G matrix
+    _mixer.construct_G_matrix();
 
     _land_speed = _param_quad_land_speed.get();
 
@@ -192,15 +202,16 @@ void QuadControl::publish_cmd(Vector4f pwm_cmd) {
   msg.timestamp = hrt_absolute_time();
   msg.noutputs = 4;
   for (size_t i = 0; i < 4; i++) {
-    msg.output[i] = pwm_cmd(i);
+    //msg.output[i] = pwm_cmd(i);
+    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   }
 
   _actuator_outputs_pub.publish(msg);
 
   // now publish for sitl
-  for (size_t i = 0; i < 4; i++) {
-    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
-  }
+  //for (size_t i = 0; i < 4; i++) {
+  //  msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+  //}
 
   _actuator_outputs_sim_pub.publish(msg);
 }
