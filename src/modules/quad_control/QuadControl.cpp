@@ -24,8 +24,6 @@ bool QuadControl::init() {
   return true;
 }
 
-
-
 void QuadControl::parameters_update() {
   // check for parameter updates
   if (_parameter_update_sub.updated()) {
@@ -33,21 +31,14 @@ void QuadControl::parameters_update() {
     _parameter_update_sub.copy(&pupdate);
 
     ModuleParams::updateParams();
- 
+
     PX4_WARN("updateParams");
 
     // update parameters in controllers
     _controller.set_gains(
-		    _param_quad_kx.get(),
-		    _param_quad_kv.get(),
-		    _param_quad_ki.get(),
-		    _param_quad_kR.get(),
-		    _param_quad_kOmega.get(),
-		    _param_quad_m.get(),
-		    _param_quad_Jxx.get(),
-		    _param_quad_Jyy.get(),
-		    _param_quad_Jzz.get()
-		    );
+        _param_quad_kx.get(), _param_quad_kv.get(), _param_quad_ki.get(),
+        _param_quad_kR.get(), _param_quad_kOmega.get(), _param_quad_m.get(),
+        _param_quad_Jxx.get(), _param_quad_Jyy.get(), _param_quad_Jzz.get());
 
     // update mixer gains
     _mixer.set_thrust_coeff(_param_quad_kThrust.get());
@@ -55,16 +46,19 @@ void QuadControl::parameters_update() {
     _mixer.set_omega_max(_param_quad_omegaMax.get());
 
     // set all the mixer geometry
-    _mixer.set_rotor(0, { _param_quad_rot1_pos_x.get(), _param_quad_rot1_pos_y.get(), 0}, -1);
-    _mixer.set_rotor(1, { _param_quad_rot2_pos_x.get(), _param_quad_rot2_pos_y.get(), 0}, -1);
-    _mixer.set_rotor(2, { _param_quad_rot3_pos_x.get(), _param_quad_rot3_pos_y.get(), 0}, 1);
-    _mixer.set_rotor(3, { _param_quad_rot4_pos_x.get(), _param_quad_rot4_pos_y.get(), 0}, 1);
+    _mixer.set_rotor(
+        0, {_param_quad_rot1_pos_x.get(), _param_quad_rot1_pos_y.get(), 0}, -1);
+    _mixer.set_rotor(
+        1, {_param_quad_rot2_pos_x.get(), _param_quad_rot2_pos_y.get(), 0}, -1);
+    _mixer.set_rotor(
+        2, {_param_quad_rot3_pos_x.get(), _param_quad_rot3_pos_y.get(), 0}, 1);
+    _mixer.set_rotor(
+        3, {_param_quad_rot4_pos_x.get(), _param_quad_rot4_pos_y.get(), 0}, 1);
 
     // update the mixer G matrix
     _mixer.construct_G_matrix();
 
     _land_speed = _param_quad_land_speed.get();
-
   }
 }
 
@@ -113,8 +107,8 @@ void QuadControl::Run() {
     _controller.update_state_pos(_state_pos);
 
     // if the mode is not landing, update the landing state
-    if (_init_commander_status && _commander_status.state != commander_status_s::STATE_LAND)
-    {
+    if (_init_commander_status &&
+        _commander_status.state != commander_status_s::STATE_LAND) {
       _local_pos_sub.copy(&_start_landing_state);
       _last_timestamp_land_started = hrt_absolute_time();
     }
@@ -136,7 +130,7 @@ void QuadControl::Run() {
 
   if (!_initialized) {
     _controller.reset_integral();
-    float v = 0;
+    float v = 1000;
     Vector4f pwm_cmd(v, v, v, v);
     publish_cmd(pwm_cmd);
     PX4_WARN("ARMED but not INITIALIZED");
@@ -154,21 +148,20 @@ void QuadControl::Run() {
     return;
   }
 
-
   // if in land mode, modify the setpoint
   if (_commander_status.state == commander_status_s::STATE_LAND) {
 
-   
-    // initialize setpoint to 0 
+    // initialize setpoint to 0
     for (size_t i = 0; i < 3; i++) {
       _setpoint.velocity[i] = 0;
       _setpoint.acceleration[i] = 0;
       _setpoint.jerk[i] = 0;
     }
     _setpoint.yawspeed = 0;
-    
-    float t = (float)(1e-6) *  (float)hrt_elapsed_time(&_last_timestamp_land_started);
-    
+
+    float t =
+        (float)(1e-6) * (float)hrt_elapsed_time(&_last_timestamp_land_started);
+
     _setpoint.position[0] = _start_landing_state.x;
     _setpoint.position[1] = _start_landing_state.y;
     _setpoint.position[2] = _start_landing_state.z + _land_speed * t;
@@ -177,19 +170,37 @@ void QuadControl::Run() {
     _controller.update_setpoint(_setpoint);
   }
 
-  // run controller
-  _controller.run();
+  // if the code is here, it is in OFFBOARD MODE and with the correct setpoint
 
-  // get thrust and torque command
-  float thrust_cmd = _controller.get_thrust_cmd();
-  thrust_cmd = (thrust_cmd < 0) ? 0 : thrust_cmd;
-  Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
+  if (_setpoint.raw_mode == false) {
+    // run controller
+    _controller.run();
 
-  // do the mixing
-  Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
+    // get thrust and torque command
+    float thrust_cmd = _controller.get_thrust_cmd();
+    thrust_cmd = (thrust_cmd < 0) ? 0 : thrust_cmd;
+    Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
-  // publish
-  publish_cmd(pwm_cmd);
+    // do the mixing
+    Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
+
+    // publish
+    publish_cmd(pwm_cmd);
+
+  } else {
+    PX4_WARN("IN RAW MOTOR MODE");
+
+    // copy from the _setpoint msg
+    Vector4f cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
+                 _setpoint.cmd[3]);
+
+    Vector4f pwm_cmd;
+    for (size_t i = 0; i < 4; i++) {
+      pwm_cmd(i) = 1000.0f * cmd(i) + 1000.0f;
+    }
+    // publish
+    publish_cmd(pwm_cmd);
+  }
 
   perf_end(_cycle_perf);
 
@@ -202,14 +213,14 @@ void QuadControl::publish_cmd(Vector4f pwm_cmd) {
   msg.timestamp = hrt_absolute_time();
   msg.noutputs = 4;
   for (size_t i = 0; i < 4; i++) {
-    //msg.output[i] = pwm_cmd(i);
+    // msg.output[i] = pwm_cmd(i);
     msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   }
 
   _actuator_outputs_pub.publish(msg);
 
   // now publish for sitl
-  //for (size_t i = 0; i < 4; i++) {
+  // for (size_t i = 0; i < 4; i++) {
   //  msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   //}
 

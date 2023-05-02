@@ -338,7 +338,7 @@ bool SimpleCommander::preflight_check() {
     PX4_WARN("EKF preflight check failed");
     return false;
   }
-  
+
   // check mag
   // check accel
   // check gyro

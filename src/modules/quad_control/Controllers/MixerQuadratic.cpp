@@ -2,9 +2,9 @@
 
 MixerQuadratic::MixerQuadratic() {
 
-  _k_thrust = 5.84;  // N / (krad/s)
-  _k_torque = 0.06*5.84; // Nm / (krad/s)
-  _k_omega_max = 1.1; // krad/s
+  _k_thrust = 5.84;        // N / (krad/s)
+  _k_torque = 0.06 * 5.84; // Nm / (krad/s)
+  _k_omega_max = 1.1;      // krad/s
 
   // default: assumes the quadrotor is arranged as follows:
   //     +x
@@ -93,7 +93,6 @@ Vector4f MixerQuadratic::mix(float thrust_cmd, Vector3f torque_cmd) {
 
   // do the inverse
   Vector4f omega_sq = _invG * fM;
-  
 
   // constrain
   Vector4f omega;

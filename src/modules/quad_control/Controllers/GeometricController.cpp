@@ -7,30 +7,32 @@
 
 using namespace matrix;
 
-GeometricController::GeometricController() { 
-	set_gains(); 
-	reset_integral();
+GeometricController::GeometricController() {
+  set_gains();
+  reset_integral();
 }
 
-void GeometricController::set_gains(float _kx, float _kv, float _ki, float _kR, float _kOmega, float _m, float _Jxx, float _Jyy, float _Jzz) {
-  
+void GeometricController::set_gains(float _kx, float _kv, float _ki, float _kR,
+                                    float _kOmega, float _m, float _Jxx,
+                                    float _Jyy, float _Jzz) {
+
   g = 9.81f;
 
-  kx = _kx; // 1.0f;
-  kv = _kv; // 2.0f;
-  ki = _ki; // 0.05f;
-  kR = _kR; //0.35f;
+  kx = _kx;         // 1.0f;
+  kv = _kv;         // 2.0f;
+  ki = _ki;         // 0.05f;
+  kR = _kR;         // 0.35f;
   kOmega = _kOmega; // 0.15f;
 
   m = _m; // 1.5f;
-  
+
   J.setZero();
   J(0, 0) = _Jxx; // 0.005;
   J(1, 1) = _Jyy; // 0.005;
   J(2, 2) = _Jzz; // 0.009;
 }
 
-void GeometricController::reset_integral(){ ei.setZero(); }
+void GeometricController::reset_integral() { ei.setZero(); }
 
 void GeometricController::update_state_pos(vehicle_local_position_s pos) {
   // grab pos and vel
@@ -71,9 +73,8 @@ void GeometricController::update_setpoint(trajectory_setpoint_s sp) {
   yaw_acc_ref = 0.0f;
 
   // do the flat state to trajectory setpoint conversion
-  flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref,
-  j_ref, s_ref,  yaw_ref, yaw_vel_ref, yaw_acc_ref);
-
+  flat_state_FRD_to_quad_state_FRD(b1_ref, Omega_ref, alpha_ref, a_ref, j_ref,
+                                   s_ref, yaw_ref, yaw_vel_ref, yaw_acc_ref);
 }
 
 // Run the controller
@@ -86,23 +87,23 @@ void GeometricController::run() {
 
   Vector3f ex = (x - x_ref).zero_if_nan();
   Vector3f ev = v - v_ref;
-  
+
   // prevent too large ex:
-  if (ex.norm() > 2){
-	  ex = 2.0f * ex / ex.norm();
+  if (ex.norm() > 2) {
+    ex = 2.0f * ex / ex.norm();
   }
 
   // prevent too large ev:
-  if (ev.norm() > 5){
-	  ev = 5.0f * ev / ev.norm();
+  if (ev.norm() > 5) {
+    ev = 5.0f * ev / ev.norm();
   }
-  
-  // increment the integral error 
-  ei += ex; 
+
+  // increment the integral error
+  ei += ex;
   // prevent windup
-  for (size_t i=0; i<3;i++){
-	  ei(i) = (ei(i) > 2.0f/ki) ? 2.0f/ki : ei(i);
-	  ei(i) = (ei(i) < -2.0f/ki) ? -2.0f/ki : ei(i);
+  for (size_t i = 0; i < 3; i++) {
+    ei(i) = (ei(i) > 2.0f / ki) ? 2.0f / ki : ei(i);
+    ei(i) = (ei(i) < -2.0f / ki) ? -2.0f / ki : ei(i);
   }
   Vector3f thrust = -kx * ex - kv * ev - ki * ei - m * g * e3 + m * a_ref;
 

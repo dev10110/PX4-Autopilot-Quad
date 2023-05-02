@@ -39,7 +39,6 @@ public:
   int print_status() override;
 
 private:
-  
   enum class VehicleState {
     DISARMED = 0, // disarmed state
     ARMED,    // armed state (i.e., received arming command and passed preflight

@@ -19,10 +19,10 @@
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_attitude.h>
 // #include <uORB/topics/vehicle_control_mode.h>
+#include <uORB/topics/commander_status.h>
 #include <uORB/topics/trajectory_setpoint.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
-#include <uORB/topics/commander_status.h>
 
 #include "Controllers/GeometricController.hpp"
 #include "Controllers/IndiGeometricController.hpp"
@@ -79,7 +79,7 @@ private:
   commander_status_s _commander_status;
 
   GeometricController _controller;
-  //MixerLinear _mixer;
+  // MixerLinear _mixer;
   MixerQuadratic _mixer;
 
   float _land_speed = 0.2f;
@@ -99,26 +99,25 @@ private:
       perf_alloc(PC_ELAPSED, MODULE_NAME ": cycle time")};
 
   DEFINE_PARAMETERS(
-	(ParamFloat<px4::params::QUAD_KX>) _param_quad_kx,
-	(ParamFloat<px4::params::QUAD_KV>) _param_quad_kv,
-	(ParamFloat<px4::params::QUAD_KI>) _param_quad_ki,
-	(ParamFloat<px4::params::QUAD_KR>) _param_quad_kR,
-	(ParamFloat<px4::params::QUAD_KOMEGA>) _param_quad_kOmega,
-	(ParamFloat<px4::params::QUAD_M>) _param_quad_m,
-	(ParamFloat<px4::params::QUAD_JXX>) _param_quad_Jxx,
-	(ParamFloat<px4::params::QUAD_JYY>) _param_quad_Jyy,
-	(ParamFloat<px4::params::QUAD_JZZ>) _param_quad_Jzz,
-	(ParamFloat<px4::params::QUAD_KTHRUST>) _param_quad_kThrust,
-	(ParamFloat<px4::params::QUAD_KTORQUE>) _param_quad_kTorque,
-	(ParamFloat<px4::params::QUAD_OMEGA_MAX>) _param_quad_omegaMax,
-	(ParamFloat<px4::params::QUAD_LAND_SPEED>) _param_quad_land_speed,
-	(ParamFloat<px4::params::QUAD_ROT1_POSX>) _param_quad_rot1_pos_x,
-	(ParamFloat<px4::params::QUAD_ROT2_POSX>) _param_quad_rot2_pos_x,
-	(ParamFloat<px4::params::QUAD_ROT3_POSX>) _param_quad_rot3_pos_x,
-	(ParamFloat<px4::params::QUAD_ROT4_POSX>) _param_quad_rot4_pos_x,
-	(ParamFloat<px4::params::QUAD_ROT1_POSY>) _param_quad_rot1_pos_y,
-	(ParamFloat<px4::params::QUAD_ROT2_POSY>) _param_quad_rot2_pos_y,
-	(ParamFloat<px4::params::QUAD_ROT3_POSY>) _param_quad_rot3_pos_y,
-	(ParamFloat<px4::params::QUAD_ROT4_POSY>) _param_quad_rot4_pos_y
-  )
+      (ParamFloat<px4::params::QUAD_KX>)_param_quad_kx,
+      (ParamFloat<px4::params::QUAD_KV>)_param_quad_kv,
+      (ParamFloat<px4::params::QUAD_KI>)_param_quad_ki,
+      (ParamFloat<px4::params::QUAD_KR>)_param_quad_kR,
+      (ParamFloat<px4::params::QUAD_KOMEGA>)_param_quad_kOmega,
+      (ParamFloat<px4::params::QUAD_M>)_param_quad_m,
+      (ParamFloat<px4::params::QUAD_JXX>)_param_quad_Jxx,
+      (ParamFloat<px4::params::QUAD_JYY>)_param_quad_Jyy,
+      (ParamFloat<px4::params::QUAD_JZZ>)_param_quad_Jzz,
+      (ParamFloat<px4::params::QUAD_KTHRUST>)_param_quad_kThrust,
+      (ParamFloat<px4::params::QUAD_KTORQUE>)_param_quad_kTorque,
+      (ParamFloat<px4::params::QUAD_OMEGA_MAX>)_param_quad_omegaMax,
+      (ParamFloat<px4::params::QUAD_LAND_SPEED>)_param_quad_land_speed,
+      (ParamFloat<px4::params::QUAD_ROT1_POSX>)_param_quad_rot1_pos_x,
+      (ParamFloat<px4::params::QUAD_ROT2_POSX>)_param_quad_rot2_pos_x,
+      (ParamFloat<px4::params::QUAD_ROT3_POSX>)_param_quad_rot3_pos_x,
+      (ParamFloat<px4::params::QUAD_ROT4_POSX>)_param_quad_rot4_pos_x,
+      (ParamFloat<px4::params::QUAD_ROT1_POSY>)_param_quad_rot1_pos_y,
+      (ParamFloat<px4::params::QUAD_ROT2_POSY>)_param_quad_rot2_pos_y,
+      (ParamFloat<px4::params::QUAD_ROT3_POSY>)_param_quad_rot3_pos_y,
+      (ParamFloat<px4::params::QUAD_ROT4_POSY>)_param_quad_rot4_pos_y)
 };
