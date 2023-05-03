@@ -391,6 +391,7 @@ bool SimpleCommander::handle_command_land() {
   return set_state(VehicleState::LAND);
 }
 
+
 int SimpleCommander::custom_command(int argc, char *argv[]) {
   if (!is_running()) {
     print_usage("not running");
@@ -410,6 +411,13 @@ int SimpleCommander::custom_command(int argc, char *argv[]) {
 
   if (!strcmp(argv[0], "arm")) {
     get_instance()->handle_command_arm();
+    return 0;
+  }
+  
+  if (!strcmp(argv[0], "force_arm")) {
+    PX4_WARN("Force arming...");
+    get_instance() -> _state = VehicleState::ARMED;
+    get_instance() -> publish_status();
     return 0;
   }
 
@@ -466,6 +474,7 @@ A simplified Commander module
   PRINT_MODULE_USAGE_NAME("simple_commander", "system");
   PRINT_MODULE_USAGE_COMMAND("start");
   PRINT_MODULE_USAGE_COMMAND("arm");
+  PRINT_MODULE_USAGE_COMMAND("force_arm");
   PRINT_MODULE_USAGE_COMMAND("disarm");
   PRINT_MODULE_USAGE_COMMAND("preflight_check");
   PRINT_MODULE_USAGE_COMMAND("land");

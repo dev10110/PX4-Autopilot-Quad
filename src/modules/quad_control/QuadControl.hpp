@@ -13,6 +13,7 @@
 #include <uORB/Subscription.hpp>
 #include <uORB/SubscriptionCallback.hpp>
 #include <uORB/topics/actuator_outputs.h>
+#include <uORB/topics/actuator_motors.h>
 #include <uORB/topics/parameter_update.h>
 // #include <uORB/topics/vehicle_angular_acceleration.h>
 #include <uORB/topics/vehicle_acceleration.h>
@@ -43,6 +44,8 @@ public:
   static int task_spawn(int argc, char *argv[]);
   static int custom_command(int argc, char *argv[]);
   static int print_usage(const char *reason = nullptr);
+  void handle_motor_test(int ind);
+  void handle_motor_test_stop();
 
 private:
   bool init();
@@ -51,6 +54,8 @@ private:
   void publish_cmd(Vector4f pwm_cmd);
 
   // Publications
+  uORB::Publication<actuator_motors_s> _actuator_motors_pub{
+      ORB_ID(actuator_motors)};
   uORB::Publication<actuator_outputs_s> _actuator_outputs_pub{
       ORB_ID(actuator_outputs)};
   uORB::Publication<actuator_outputs_s> _actuator_outputs_sim_pub{
