@@ -213,16 +213,16 @@ void QuadControl::publish_cmd(Vector4f pwm_cmd) {
   msg.timestamp = hrt_absolute_time();
   msg.noutputs = 4;
   for (size_t i = 0; i < 4; i++) {
-    // msg.output[i] = pwm_cmd(i);
-    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+    msg.output[i] = pwm_cmd(i);
+    //msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   }
 
   _actuator_outputs_pub.publish(msg);
 
   // now publish for sitl
-  // for (size_t i = 0; i < 4; i++) {
-  //  msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
-  //}
+  for (size_t i = 0; i < 4; i++) {
+    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+  }
 
   _actuator_outputs_sim_pub.publish(msg);
 }

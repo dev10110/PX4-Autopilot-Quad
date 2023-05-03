@@ -274,7 +274,28 @@ void SimpleCommander::run_state_machine() {
 }
 
 int SimpleCommander::print_status() {
-  PX4_INFO("PRINT STATUS");
+  switch (_state) {
+
+  case VehicleState::DISARMED:
+    PX4_INFO("STATE: DISARMED");
+    return 0;
+
+  case VehicleState::ARMED:
+    PX4_INFO("STATE: ARMED");
+    return 0;
+
+  case VehicleState::OFFBOARD:
+    PX4_INFO("STATE: OFFBOARD");
+    return 0;
+
+  case VehicleState::LAND:
+    PX4_INFO("STATE: LAND");
+    return 0;
+
+  default:
+    // should never get here
+    return 0;
+  }
   return 0;
 }
 
