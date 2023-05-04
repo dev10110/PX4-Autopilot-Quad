@@ -130,7 +130,7 @@ void QuadControl::Run() {
 
   if (!_initialized) {
     _controller.reset_integral();
-    float v = 1000;
+    float v = 1100;
     Vector4f pwm_cmd(v, v, v, v);
     publish_cmd(pwm_cmd);
     PX4_WARN("ARMED but not INITIALIZED");
@@ -209,22 +209,27 @@ void QuadControl::Run() {
 
 void QuadControl::publish_cmd(Vector4f pwm_cmd) {
 
+{
+  // publish for sitl
   actuator_outputs_s msg;
   msg.timestamp = hrt_absolute_time();
-  msg.noutputs = 4;
   for (size_t i = 0; i < 4; i++) {
-    // msg.output[i] = pwm_cmd(i);
     msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
   }
-
-  _actuator_outputs_pub.publish(msg);
-
-  // now publish for sitl
-  // for (size_t i = 0; i < 4; i++) {
-  //  msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
-  //}
-
   _actuator_outputs_sim_pub.publish(msg);
+}
+{ 
+ // publish for hardware
+  actuator_motors_s msg;
+  msg.timestamp = hrt_absolute_time();
+  msg.reversible_flags = 0; // no motors are reversible
+  for (size_t i = 0; i < 4; i++) {
+    msg.control[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+  }
+ _actuator_motors_pub.publish(msg);
+
+ 
+}
 }
 
 int QuadControl::task_spawn(int argc, char *argv[]) {
@@ -250,7 +255,49 @@ int QuadControl::task_spawn(int argc, char *argv[]) {
   return PX4_ERROR;
 }
 
+
+void QuadControl::handle_motor_test(int motor_ind) {
+    Vector4f pwm_cmd(0,0,0,0);
+    pwm_cmd(motor_ind) = 1000.0f + 0.2f * 1000.0f;
+    publish_cmd(pwm_cmd);
+PX4_WARN("Publishing motor test");
+}
+
+void QuadControl::handle_motor_test_stop() {
+    Vector4f pwm_cmd(0,0,0,0);
+    publish_cmd(pwm_cmd);
+PX4_WARN("publishing motor test stop");
+}
+
 int QuadControl::custom_command(int argc, char *argv[]) {
+
+
+  if (!strcmp(argv[0], "motor_test1")) {
+    PX4_INFO("running motor test 1");
+     get_instance() -> handle_motor_test(0);
+     return 0;
+  }
+  if (!strcmp(argv[0], "motor_test2")) {
+    PX4_INFO("running motor test 2");
+     get_instance() -> handle_motor_test(1);
+     return 0;
+  }
+  if (!strcmp(argv[0], "motor_test3")) {
+    PX4_INFO("running motor test 3");
+     get_instance() -> handle_motor_test(2);
+     return 0;
+  }
+  if (!strcmp(argv[0], "motor_test4")) {
+    PX4_INFO("running motor test 4");
+     get_instance() -> handle_motor_test(3);
+     return 0;
+  }
+  if (!strcmp(argv[0], "stop_motor_test")) {
+    PX4_INFO("stopping motor test 1");
+     get_instance() -> handle_motor_test_stop();
+     return 0;
+  }
+
   return print_usage("unknown command");
 }
 
