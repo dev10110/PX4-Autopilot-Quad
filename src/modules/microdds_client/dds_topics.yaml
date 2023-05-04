@@ -94,7 +94,7 @@ subscriptions:
     # - topic: /fmu/in/vehicle_trajectory_waypoint
     #   type: px4_msgs::msg::VehicleTrajectoryWaypoint
 
-  - topic: fmu/in/parameter_req
+  - topic: /fmu/in/parameter_req
     type: px4_msgs::msg::ParameterReq
 
     # - topic: fmu/in/motor_setpoint
