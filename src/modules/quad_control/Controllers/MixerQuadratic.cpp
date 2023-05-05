@@ -2,9 +2,14 @@
 
 MixerQuadratic::MixerQuadratic() {
 
-  _k_thrust = 5.84;        // N / (krad/s)
-  _k_torque = 0.06 * 5.84; // Nm / (krad/s)
+  _k_thrust = 5.84;        // N / (krad/s)^2
+  _k_torque = 0.06f * _k_thrust; // Nm / (krad/s)^2
   _k_omega_max = 1.1;      // krad/s
+
+  // model is motor_cmd = a  + b * (omega/omega_max) + c * (omega/omega_max)^2
+  _k_esc_a = 0.0; 
+  _k_esc_b = 1.0;
+  _k_esc_c = 0.0; // by default assume a linear map between omega and esc pwm;
 
   // default: assumes the quadrotor is arranged as follows:
   //     +x
@@ -40,6 +45,12 @@ void MixerQuadratic::set_thrust_coeff(float k) { _k_thrust = k; }
 void MixerQuadratic::set_torque_coeff(float k) { _k_torque = k; }
 
 void MixerQuadratic::set_omega_max(float w) { _k_omega_max = w; }
+
+void MixerQuadratic::set_esc_coeff(float esc_a, float esc_b, float esc_c) {
+	_k_esc_a = esc_a;
+	_k_esc_b = esc_b;
+	_k_esc_c = esc_c;
+}
 
 // dir: +1 if it produces torque in +z direction (i.e., down). -1 else
 void MixerQuadratic::set_rotor(size_t ind, Vector3f pos, int dir) {
@@ -94,22 +105,20 @@ Vector4f MixerQuadratic::mix(float thrust_cmd, Vector3f torque_cmd) {
   // do the inverse
   Vector4f omega_sq = _invG * fM;
 
-  // constrain
+  // get the omega required
   Vector4f omega;
   for (size_t i = 0; i < 4; i++) {
     omega(i) = (omega_sq(i) > 0) ? sqrt(omega_sq(i)) : 0;
     omega(i) = (omega(i) <= _k_omega_max) ? omega(i) : _k_omega_max;
   }
 
-  // convert to PWM
-  const float PWM_MIN = 1000;
-  const float PWM_MAX = 2000;
-  Vector4f pwm;
-  for (size_t i = 0; i < 4; i++) {
-    pwm(i) = PWM_MIN + (PWM_MAX - PWM_MIN) * (omega(i) / _k_omega_max);
+  Vector4f motor_cmd;
+  for (size_t i=0; i<4; i++) {
+	  float w = omega(i) / _k_omega_max;
+	  motor_cmd(i) = _k_esc_c*w*w + _k_esc_b*w + _k_esc_a;
   }
 
-  return pwm;
+  return motor_cmd;
 }
 
 SquareMatrix<float, 4> MixerQuadratic::get_G_matrix() { return _invG.I(); }

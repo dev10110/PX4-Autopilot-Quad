@@ -10,6 +10,7 @@ public:
   MixerQuadratic();
 
   // TODO: add some docs on what these are, and what the assumed model is
+  void set_esc_coeff(float esc_a, float esc_b, float esc_c);
   void set_thrust_coeff(float k_thrust);
   void set_torque_coeff(float k_torque);
   void set_omega_max(float w);
@@ -22,6 +23,7 @@ public:
 private:
   // Parameters
   float _k_thrust, _k_torque, _k_omega_max;
+  float _k_esc_a, _k_esc_b, _k_esc_c;
 
   Vector3f rotor_pos[4];
   int rotor_dir[4];

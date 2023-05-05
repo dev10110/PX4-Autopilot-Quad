@@ -58,6 +58,13 @@ void QuadControl::parameters_update() {
     // update the mixer G matrix
     _mixer.construct_G_matrix();
 
+    // update the esc_params
+    _mixer.set_esc_coeff(
+		    _param_quad_esc_a.get(),
+		    _param_quad_esc_b.get(),
+		    _param_quad_esc_c.get());
+		    
+
     _land_speed = _param_quad_land_speed.get();
   }
 }
@@ -91,8 +98,8 @@ void QuadControl::Run() {
   if (!_armed) {
     float v = 0;
     _controller.reset_integral();
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    Vector4f motor_cmd(v, v, v, v);
+    publish_cmd(motor_cmd);
     perf_end(_cycle_perf);
     return;
   }
@@ -130,9 +137,9 @@ void QuadControl::Run() {
 
   if (!_initialized) {
     _controller.reset_integral();
-    float v = 1100;
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    float v = 0.05;
+    Vector4f motor_cmd(v, v, v, v);
+    publish_cmd(motor_cmd);
     PX4_WARN("ARMED but not INITIALIZED");
     perf_end(_cycle_perf);
     return;
@@ -141,9 +148,9 @@ void QuadControl::Run() {
   // if in armed mode, publish the min PWM
   if (_commander_status.state == commander_status_s::STATE_ARMED) {
     _controller.reset_integral();
-    float v = 1100.0;
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    float v = 0.05;
+    Vector4f motor_cmd(v, v, v, v);
+    publish_cmd(motor_cmd);
     perf_end(_cycle_perf);
     return;
   }
@@ -182,24 +189,21 @@ void QuadControl::Run() {
     Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
     // do the mixing
-    Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
+    // motor_cmd is in range [0, 1] which will be mapped (by output drivers to 1000-2000 us)
+    Vector4f motor_cmd = _mixer.mix(thrust_cmd, torque_cmd);
 
     // publish
-    publish_cmd(pwm_cmd);
+    publish_cmd(motor_cmd);
 
   } else {
     PX4_WARN("IN RAW MOTOR MODE");
 
     // copy from the _setpoint msg
-    Vector4f cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
+    Vector4f motor_cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
                  _setpoint.cmd[3]);
 
-    Vector4f pwm_cmd;
-    for (size_t i = 0; i < 4; i++) {
-      pwm_cmd(i) = 1000.0f * cmd(i) + 1000.0f;
-    }
     // publish
-    publish_cmd(pwm_cmd);
+    publish_cmd(motor_cmd);
   }
 
   perf_end(_cycle_perf);
@@ -207,14 +211,14 @@ void QuadControl::Run() {
   return;
 }
 
-void QuadControl::publish_cmd(Vector4f pwm_cmd) {
+void QuadControl::publish_cmd(Vector4f motor_cmd) {
 
 {
   // publish for sitl
   actuator_outputs_s msg;
   msg.timestamp = hrt_absolute_time();
   for (size_t i = 0; i < 4; i++) {
-    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+    msg.output[i] = motor_cmd(i); 
   }
   _actuator_outputs_sim_pub.publish(msg);
 }
@@ -224,7 +228,7 @@ void QuadControl::publish_cmd(Vector4f pwm_cmd) {
   msg.timestamp = hrt_absolute_time();
   msg.reversible_flags = 0; // no motors are reversible
   for (size_t i = 0; i < 4; i++) {
-    msg.control[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+    msg.control[i] = motor_cmd(i);
   }
  _actuator_motors_pub.publish(msg);
 
@@ -257,15 +261,15 @@ int QuadControl::task_spawn(int argc, char *argv[]) {
 
 
 void QuadControl::handle_motor_test(int motor_ind) {
-    Vector4f pwm_cmd(0,0,0,0);
-    pwm_cmd(motor_ind) = 1000.0f + 0.2f * 1000.0f;
-    publish_cmd(pwm_cmd);
+    Vector4f motor_cmd(0,0,0,0);
+    motor_cmd(motor_ind) = 0.1f;
+    publish_cmd(motor_cmd);
 PX4_WARN("Publishing motor test");
 }
 
 void QuadControl::handle_motor_test_stop() {
-    Vector4f pwm_cmd(0,0,0,0);
-    publish_cmd(pwm_cmd);
+    Vector4f motor_cmd(0,0,0,0);
+    publish_cmd(motor_cmd);
 PX4_WARN("publishing motor test stop");
 }
 
