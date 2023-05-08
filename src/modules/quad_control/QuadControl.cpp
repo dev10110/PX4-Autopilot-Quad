@@ -58,8 +58,7 @@ void QuadControl::parameters_update() {
     // update the mixer G matrix
     _mixer.construct_G_matrix();
 
-
-    // update the esc nonlinearity
+   // update the esc nonlinearity
     _mixer.set_esc_nonlinearity(_param_quad_esc_nonlinearity.get());
 
     _land_speed = _param_quad_land_speed.get();
@@ -195,11 +194,11 @@ void QuadControl::Run() {
     PX4_WARN("IN RAW MOTOR MODE");
 
     // copy from the _setpoint msg
-    Vector4f cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
+    Vector4f motor_cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
                  _setpoint.cmd[3]);
 
     // publish
-    publish_cmd(cmd);
+    publish_cmd(motor_cmd);
   }
 
   perf_end(_cycle_perf);
@@ -208,7 +207,6 @@ void QuadControl::Run() {
 }
 
 void QuadControl::publish_cmd(Vector4f cmd) {
-
 {
   // publish for sitl
   actuator_outputs_s msg;

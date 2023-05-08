@@ -6,7 +6,6 @@
 /**
  * Position controller gain kx
  *
- * @unit norm
  * @min 0.0
  * @max 5.0
  * @decimal 3
@@ -18,7 +17,6 @@ PARAM_DEFINE_FLOAT(QUAD_KX, 1.0f);
 /**
  * Position controller gain kv
  *
- * @unit norm
  * @min 0.0
  * @max 5.0
  * @decimal 3
@@ -30,11 +28,10 @@ PARAM_DEFINE_FLOAT(QUAD_KV, 2.0f);
 /**
  * Position controller gain ki
  *
- * @unit norm
  * @min 0.0
  * @max 5.0
- * @decimal 3
- * @increment 0.01
+ * @decimal 4
+ * @increment 0.001
  * @group QuadControl
  */
 PARAM_DEFINE_FLOAT(QUAD_KI, 0.001f);
@@ -42,7 +39,6 @@ PARAM_DEFINE_FLOAT(QUAD_KI, 0.001f);
 /**
  * Position controller gain kR
  *
- * @unit norm
  * @min 0.0
  * @max 1.0
  * @decimal 3
@@ -54,7 +50,6 @@ PARAM_DEFINE_FLOAT(QUAD_KR, 0.35f);
 /**
  * Position controller gain kOmega
  *
- * @unit norm
  * @min 0.0
  * @max 1.0
  * @decimal 3
@@ -73,7 +68,7 @@ PARAM_DEFINE_FLOAT(QUAD_KOMEGA, 0.15f);
  * @increment 0.01
  * @group QuadControl
  */
-PARAM_DEFINE_FLOAT(QUAD_M, 1.5f);
+PARAM_DEFINE_FLOAT(QUAD_M, 0.8f);
 
 /**
  * Moment of inertia about xx axis

@@ -84,7 +84,6 @@ private:
   commander_status_s _commander_status;
 
   GeometricController _controller;
-  // MixerLinear _mixer;
   MixerQuadratic _mixer;
 
   float _land_speed = 0.2f;

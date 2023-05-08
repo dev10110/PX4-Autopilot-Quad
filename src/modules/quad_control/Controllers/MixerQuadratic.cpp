@@ -2,8 +2,8 @@
 
 MixerQuadratic::MixerQuadratic() {
 
-  _k_thrust = 5.84;        // N / (krad/s)
-  _k_torque = 0.06 * 5.84; // Nm / (krad/s)
+  _k_thrust = 5.84;        // N / (krad/s)^2
+  _k_torque = 0.06f * _k_thrust; // Nm / (krad/s)^2
   _k_omega_max = 1.1;      // krad/s
   _k_alpha = 0.0;          // assumes linear map from omega/omega_max to actuator_cmd in [0, 1]
 
@@ -102,7 +102,7 @@ Vector4f MixerQuadratic::mix(float thrust_cmd, Vector3f torque_cmd) {
   // do the inverse
   Vector4f omega_sq = _invG * fM;
 
-  // constrain
+  // get the omega required
   Vector4f omega;
   for (size_t i = 0; i < 4; i++) {
     omega(i) = (omega_sq(i) > 0) ? sqrt(omega_sq(i)) : 0;

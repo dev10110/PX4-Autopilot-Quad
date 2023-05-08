@@ -49,5 +49,11 @@ subscriptions:
   - topic: /fmu/in/vehicle_command
     type: px4_msgs::msg::VehicleCommand
 
-  - topic: fmu/in/parameter_req
+    # - topic: /fmu/in/vehicle_trajectory_bezier
+    #   type: px4_msgs::msg::VehicleTrajectoryBezier
+
+    # - topic: /fmu/in/vehicle_trajectory_waypoint
+    #   type: px4_msgs::msg::VehicleTrajectoryWaypoint
+
+  - topic: /fmu/in/parameter_req
     type: px4_msgs::msg::ParameterReq
