@@ -75,6 +75,9 @@ px4_add_romfs_files(
 	4003_gz_rc_cessna
 	4004_gz_standard_vtol
 	4005_gz_x500_vision
+	4006_gz_px4vision
+
+	5001_gazebo-classic_visquad
 
 	5001_gazebo-classic_visquad
 
