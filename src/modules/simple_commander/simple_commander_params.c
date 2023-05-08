@@ -4,6 +4,5 @@
  *
  * Parameters definition for Commander.
  *
- * @author Devansh Agrawal 
+ * @author Devansh Agrawal
  */
-

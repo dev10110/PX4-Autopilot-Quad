@@ -391,7 +391,6 @@ bool SimpleCommander::handle_command_land() {
   return set_state(VehicleState::LAND);
 }
 
-
 int SimpleCommander::custom_command(int argc, char *argv[]) {
   if (!is_running()) {
     print_usage("not running");
@@ -413,11 +412,11 @@ int SimpleCommander::custom_command(int argc, char *argv[]) {
     get_instance()->handle_command_arm();
     return 0;
   }
-  
+
   if (!strcmp(argv[0], "force_arm")) {
     PX4_WARN("Force arming...");
-    get_instance() -> _state = VehicleState::ARMED;
-    get_instance() -> publish_status();
+    get_instance()->_state = VehicleState::ARMED;
+    get_instance()->publish_status();
     return 0;
   }
 
