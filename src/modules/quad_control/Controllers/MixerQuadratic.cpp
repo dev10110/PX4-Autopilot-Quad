@@ -2,10 +2,11 @@
 
 MixerQuadratic::MixerQuadratic() {
 
-  _k_thrust = 5.84;        // N / (krad/s)^2
+  _k_thrust = 5.84;              // N / (krad/s)^2
   _k_torque = 0.06f * _k_thrust; // Nm / (krad/s)^2
-  _k_omega_max = 1.1;      // krad/s
-  _k_alpha = 0.0;          // assumes linear map from omega/omega_max to actuator_cmd in [0, 1]
+  _k_omega_max = 1.1;            // krad/s
+  _k_alpha =
+      0.0; // assumes linear map from omega/omega_max to actuator_cmd in [0, 1]
 
   // default: assumes the quadrotor is arranged as follows:
   //     +x
@@ -68,7 +69,7 @@ void MixerQuadratic::construct_G_matrix() {
   //   w is in [0, 1]
   //   cmd is in [0, 1]
   //   alpha is in [0, 1]
-  // 
+  //
   // the parameter alpha controls how nonlinear the esc mapping is
 
   Vector3f iz(0, 0, 1);
@@ -113,9 +114,8 @@ Vector4f MixerQuadratic::mix(float thrust_cmd, Vector3f torque_cmd) {
   Vector4f cmd;
   for (size_t i = 0; i < 4; i++) {
     float w = omega(i) / _k_omega_max;
-    cmd(i) = (1-_k_alpha) * w + _k_alpha * w*w;
+    cmd(i) = (1 - _k_alpha) * w + _k_alpha * w * w;
   }
 
   return cmd;
 }
-
