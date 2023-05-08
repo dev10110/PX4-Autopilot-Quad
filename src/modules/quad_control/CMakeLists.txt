@@ -5,14 +5,10 @@ px4_add_module(
   SRCS
     QuadControl.cpp
     QuadControl.hpp
-    Controllers/MixerLinear.hpp
-    Controllers/MixerLinear.cpp
     Controllers/MixerQuadratic.hpp
     Controllers/MixerQuadratic.cpp
     Controllers/GeometricController.hpp
     Controllers/GeometricController.cpp
-    Controllers/IndiGeometricController.hpp
-    Controllers/IndiGeometricController.cpp
     Controllers/DiffFlat.hpp
   DEPENDS
 )
