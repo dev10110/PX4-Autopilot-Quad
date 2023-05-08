@@ -116,6 +116,7 @@ private:
       (ParamFloat<px4::params::QUAD_KTHRUST>)_param_quad_kThrust,
       (ParamFloat<px4::params::QUAD_KTORQUE>)_param_quad_kTorque,
       (ParamFloat<px4::params::QUAD_OMEGA_MAX>)_param_quad_omegaMax,
+      (ParamFloat<px4::params::QUAD_ESC_NONLIN>) _param_quad_esc_nonlinearity,
       (ParamFloat<px4::params::QUAD_LAND_SPEED>)_param_quad_land_speed,
       (ParamFloat<px4::params::QUAD_ROT1_POSX>)_param_quad_rot1_pos_x,
       (ParamFloat<px4::params::QUAD_ROT2_POSX>)_param_quad_rot2_pos_x,

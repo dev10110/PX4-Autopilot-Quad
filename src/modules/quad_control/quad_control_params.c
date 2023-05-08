@@ -158,13 +158,103 @@ PARAM_DEFINE_FLOAT(QUAD_OMEGA_MAX, 1.1);
 PARAM_DEFINE_FLOAT(QUAD_LAND_SPEED, 0.2);
 
 
+/**
+ * ESC Nonlinearity Coefficient [0, 1]. linear: 0.0, quadratic: 1.0;
+ *
+ * @min 0.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
+PARAM_DEFINE_FLOAT(QUAD_ESC_NONLIN, 0.0);
 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT1_POSX, 0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT2_POSX, -0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT3_POSX, 0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT4_POSX, -0.15); 
 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT1_POSY, 0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT2_POSY, -0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT3_POSY, -0.15); 
+/**
+ * Rotor Position (m)
+ *
+ * @unit m
+ * @min -1.0
+ * @max 1.0
+ * @decimal 3
+ * @increment 0.01
+ * @group QuadControl
+ */
 PARAM_DEFINE_FLOAT(QUAD_ROT4_POSY, 0.15); 

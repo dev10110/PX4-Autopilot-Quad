@@ -5,6 +5,7 @@ MixerQuadratic::MixerQuadratic() {
   _k_thrust = 5.84;        // N / (krad/s)
   _k_torque = 0.06 * 5.84; // Nm / (krad/s)
   _k_omega_max = 1.1;      // krad/s
+  _k_alpha = 0.0;          // assumes linear map from omega/omega_max to actuator_cmd in [0, 1]
 
   // default: assumes the quadrotor is arranged as follows:
   //     +x
@@ -41,6 +42,10 @@ void MixerQuadratic::set_torque_coeff(float k) { _k_torque = k; }
 
 void MixerQuadratic::set_omega_max(float w) { _k_omega_max = w; }
 
+void MixerQuadratic::set_esc_nonlinearity(float alpha) { _k_alpha = alpha; }
+
+SquareMatrix<float, 4> MixerQuadratic::get_G_matrix() { return _invG.I(); }
+
 // dir: +1 if it produces torque in +z direction (i.e., down). -1 else
 void MixerQuadratic::set_rotor(size_t ind, Vector3f pos, int dir) {
   rotor_pos[ind] = pos;
@@ -52,16 +57,19 @@ void MixerQuadratic::construct_G_matrix() {
   // construct the G, Ginv matrix,
   //
   // assume relationship is
-  // [thrust, torque] = G * w^2
-  // cmd = w / omega_max;
-  // pwm = 1000 + (cmd*1000);
+  // [thrust, torque] = G * omega^2
+  // w = omega / omega_max;
+  // cmd = (1-alpha) w + alpha w^2;
   //
   // where
   //   thrust is in N
   //   torque is in Nm
-  //   w is in krad/s
+  //   omega is in krad/s
+  //   w is in [0, 1]
   //   cmd is in [0, 1]
-  //   pwm is in [1000, 2000]
+  //   alpha is in [0, 1]
+  // 
+  // the parameter alpha controls how nonlinear the esc mapping is
 
   Vector3f iz(0, 0, 1);
 
@@ -101,15 +109,13 @@ Vector4f MixerQuadratic::mix(float thrust_cmd, Vector3f torque_cmd) {
     omega(i) = (omega(i) <= _k_omega_max) ? omega(i) : _k_omega_max;
   }
 
-  // convert to PWM
-  const float PWM_MIN = 1000;
-  const float PWM_MAX = 2000;
-  Vector4f pwm;
+  // convert to CMD
+  Vector4f cmd;
   for (size_t i = 0; i < 4; i++) {
-    pwm(i) = PWM_MIN + (PWM_MAX - PWM_MIN) * (omega(i) / _k_omega_max);
+    float w = omega(i) / _k_omega_max;
+    cmd(i) = (1-_k_alpha) * w + _k_alpha * w*w;
   }
 
-  return pwm;
+  return cmd;
 }
 
-SquareMatrix<float, 4> MixerQuadratic::get_G_matrix() { return _invG.I(); }

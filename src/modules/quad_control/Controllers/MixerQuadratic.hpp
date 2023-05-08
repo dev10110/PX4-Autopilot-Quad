@@ -13,6 +13,7 @@ public:
   void set_thrust_coeff(float k_thrust);
   void set_torque_coeff(float k_torque);
   void set_omega_max(float w);
+  void set_esc_nonlinearity(float alpha);
   void set_rotor(size_t ind, Vector3f pos, int dir);
   void construct_G_matrix();
   SquareMatrix<float, 4> get_G_matrix();
@@ -22,6 +23,7 @@ public:
 private:
   // Parameters
   float _k_thrust, _k_torque, _k_omega_max;
+  float _k_alpha;
 
   Vector3f rotor_pos[4];
   int rotor_dir[4];

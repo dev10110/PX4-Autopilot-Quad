@@ -58,6 +58,10 @@ void QuadControl::parameters_update() {
     // update the mixer G matrix
     _mixer.construct_G_matrix();
 
+
+    // update the esc nonlinearity
+    _mixer.set_esc_nonlinearity(_param_quad_esc_nonlinearity.get());
+
     _land_speed = _param_quad_land_speed.get();
   }
 }
@@ -91,8 +95,8 @@ void QuadControl::Run() {
   if (!_armed) {
     float v = 0;
     _controller.reset_integral();
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    Vector4f cmd(v, v, v, v);
+    publish_cmd(cmd);
     perf_end(_cycle_perf);
     return;
   }
@@ -130,9 +134,9 @@ void QuadControl::Run() {
 
   if (!_initialized) {
     _controller.reset_integral();
-    float v = 1100;
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    float v = 0.05;
+    Vector4f cmd(v, v, v, v);
+    publish_cmd(cmd);
     PX4_WARN("ARMED but not INITIALIZED");
     perf_end(_cycle_perf);
     return;
@@ -141,9 +145,9 @@ void QuadControl::Run() {
   // if in armed mode, publish the min PWM
   if (_commander_status.state == commander_status_s::STATE_ARMED) {
     _controller.reset_integral();
-    float v = 1100.0;
-    Vector4f pwm_cmd(v, v, v, v);
-    publish_cmd(pwm_cmd);
+    float v = 0.05;
+    Vector4f cmd(v, v, v, v);
+    publish_cmd(cmd);
     perf_end(_cycle_perf);
     return;
   }
@@ -182,10 +186,10 @@ void QuadControl::Run() {
     Vector3f torque_cmd = _controller.get_torque_cmd().zero_if_nan();
 
     // do the mixing
-    Vector4f pwm_cmd = _mixer.mix(thrust_cmd, torque_cmd);
+    Vector4f cmd = _mixer.mix(thrust_cmd, torque_cmd);
 
     // publish
-    publish_cmd(pwm_cmd);
+    publish_cmd(cmd);
 
   } else {
     PX4_WARN("IN RAW MOTOR MODE");
@@ -194,12 +198,8 @@ void QuadControl::Run() {
     Vector4f cmd(_setpoint.cmd[0], _setpoint.cmd[1], _setpoint.cmd[2],
                  _setpoint.cmd[3]);
 
-    Vector4f pwm_cmd;
-    for (size_t i = 0; i < 4; i++) {
-      pwm_cmd(i) = 1000.0f * cmd(i) + 1000.0f;
-    }
     // publish
-    publish_cmd(pwm_cmd);
+    publish_cmd(cmd);
   }
 
   perf_end(_cycle_perf);
@@ -207,14 +207,14 @@ void QuadControl::Run() {
   return;
 }
 
-void QuadControl::publish_cmd(Vector4f pwm_cmd) {
+void QuadControl::publish_cmd(Vector4f cmd) {
 
 {
   // publish for sitl
   actuator_outputs_s msg;
   msg.timestamp = hrt_absolute_time();
   for (size_t i = 0; i < 4; i++) {
-    msg.output[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+    msg.output[i] = cmd(i);
   }
   _actuator_outputs_sim_pub.publish(msg);
 }
@@ -224,7 +224,7 @@ void QuadControl::publish_cmd(Vector4f pwm_cmd) {
   msg.timestamp = hrt_absolute_time();
   msg.reversible_flags = 0; // no motors are reversible
   for (size_t i = 0; i < 4; i++) {
-    msg.control[i] = (pwm_cmd(i) - 1000.0f) / 1000.0f;
+    msg.control[i] = cmd(i);
   }
  _actuator_motors_pub.publish(msg);
 
@@ -256,48 +256,7 @@ int QuadControl::task_spawn(int argc, char *argv[]) {
 }
 
 
-void QuadControl::handle_motor_test(int motor_ind) {
-    Vector4f pwm_cmd(0,0,0,0);
-    pwm_cmd(motor_ind) = 1000.0f + 0.2f * 1000.0f;
-    publish_cmd(pwm_cmd);
-PX4_WARN("Publishing motor test");
-}
-
-void QuadControl::handle_motor_test_stop() {
-    Vector4f pwm_cmd(0,0,0,0);
-    publish_cmd(pwm_cmd);
-PX4_WARN("publishing motor test stop");
-}
-
 int QuadControl::custom_command(int argc, char *argv[]) {
-
-
-  if (!strcmp(argv[0], "motor_test1")) {
-    PX4_INFO("running motor test 1");
-     get_instance() -> handle_motor_test(0);
-     return 0;
-  }
-  if (!strcmp(argv[0], "motor_test2")) {
-    PX4_INFO("running motor test 2");
-     get_instance() -> handle_motor_test(1);
-     return 0;
-  }
-  if (!strcmp(argv[0], "motor_test3")) {
-    PX4_INFO("running motor test 3");
-     get_instance() -> handle_motor_test(2);
-     return 0;
-  }
-  if (!strcmp(argv[0], "motor_test4")) {
-    PX4_INFO("running motor test 4");
-     get_instance() -> handle_motor_test(3);
-     return 0;
-  }
-  if (!strcmp(argv[0], "stop_motor_test")) {
-    PX4_INFO("stopping motor test 1");
-     get_instance() -> handle_motor_test_stop();
-     return 0;
-  }
-
   return print_usage("unknown command");
 }
 
