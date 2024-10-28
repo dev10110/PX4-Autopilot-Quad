@@ -22,6 +22,7 @@
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
 #include <uORB/topics/vehicle_status.h>
+#include <uORB/topics/quad_control_log.h>
 
 #include "Controllers/GeometricController.hpp"
 #include "Controllers/MixerQuadratic.hpp"
@@ -56,6 +57,8 @@ private:
       ORB_ID(actuator_outputs)};
   uORB::Publication<actuator_outputs_s> _actuator_outputs_sim_pub{
       ORB_ID(actuator_outputs_sim)};
+  uORB::Publication<quad_control_log_s> _quad_control_log_pub{
+      ORB_ID(quad_control_log)};
 
   // Subscriptions
   uORB::Subscription _commander_status_sub{ORB_ID(commander_status)};
@@ -81,6 +84,8 @@ private:
 
   GeometricController _controller;
   MixerQuadratic _mixer;
+
+  bool _enable_logging = false;
 
   float _land_speed = 0.2f;
 
@@ -120,5 +125,6 @@ private:
       (ParamFloat<px4::params::QUAD_ROT1_POSY>)_param_quad_rot1_pos_y,
       (ParamFloat<px4::params::QUAD_ROT2_POSY>)_param_quad_rot2_pos_y,
       (ParamFloat<px4::params::QUAD_ROT3_POSY>)_param_quad_rot3_pos_y,
-      (ParamFloat<px4::params::QUAD_ROT4_POSY>)_param_quad_rot4_pos_y)
+      (ParamFloat<px4::params::QUAD_ROT4_POSY>)_param_quad_rot4_pos_y,
+      (ParamInt<px4::params::QUAD_LOGGING_EN>)_param_quad_logging_en)
 };

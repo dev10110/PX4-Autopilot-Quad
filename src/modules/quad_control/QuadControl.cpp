@@ -61,6 +61,10 @@ void QuadControl::parameters_update() {
     // update the esc nonlinearity
     _mixer.set_esc_nonlinearity(_param_quad_esc_nonlinearity.get());
 
+    // update the logging
+    _enable_logging = (_param_quad_logging_en.get() == 1);
+    _controller.enable_logging(_enable_logging);
+
     _land_speed = _param_quad_land_speed.get();
   }
 }
@@ -188,7 +192,14 @@ void QuadControl::Run() {
     Vector4f cmd = _mixer.mix(thrust_cmd, torque_cmd);
 
     // publish
-    publish_cmd(cmd);
+    publish_cmd(cmd); 
+
+    // create the QuadControlLog message
+    if (_enable_logging){
+      quad_control_log_s log_msg = _controller.get_log_message();
+      log_msg.timestamp = hrt_absolute_time();
+      _quad_control_log_pub.publish(log_msg);
+    }
 
   } else {
     PX4_WARN("IN RAW MOTOR MODE");
@@ -227,6 +238,7 @@ void QuadControl::publish_cmd(Vector4f cmd) {
     _actuator_motors_pub.publish(msg);
   }
 }
+
 
 int QuadControl::task_spawn(int argc, char *argv[]) {
 

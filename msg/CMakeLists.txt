@@ -155,6 +155,7 @@ set(msg_files
 	Px4ioStatus.msg
 	QshellReq.msg
 	QshellRetval.msg
+  QuadControlLog.msg
 	RadioStatus.msg
 	RateCtrlStatus.msg
 	RcChannels.msg

@@ -251,3 +251,10 @@ PARAM_DEFINE_FLOAT(QUAD_ROT3_POSY, -0.15);
  * @group QuadControl
  */
 PARAM_DEFINE_FLOAT(QUAD_ROT4_POSY, 0.15); 
+/**
+* QuadControl logging enable.
+*
+* @boolean
+* @group QuadControl
+*/
+PARAM_DEFINE_INT32(QUAD_LOGGING_EN, 1);

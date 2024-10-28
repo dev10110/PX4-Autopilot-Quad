@@ -310,7 +310,7 @@ void SimpleCommander::run_state_machine() {
     if (hrt_elapsed_time(&_last_timestamp_offboard) > 200_ms) {
       PX4_WARN("Setting VehicleState::LAND because offboard_timestamp timeout");
       set_state(VehicleState::LAND);
-    }
+    } 
 
     return;
 

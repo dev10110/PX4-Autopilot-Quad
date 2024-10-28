@@ -238,6 +238,9 @@ void LoggedTopics::add_default_topics()
 		add_topic("vehicle_local_position_groundtruth", 20);
 	}
 
+  // ADD QUAD_CONTROL_LOGGING DASC LAB
+  add_topic("quad_control_log");
+
 #ifdef CONFIG_ARCH_BOARD_PX4_SITL
 	add_topic("fw_virtual_attitude_setpoint");
 	add_topic("mc_virtual_attitude_setpoint");

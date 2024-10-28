@@ -7,6 +7,7 @@
 #include <uORB/topics/vehicle_angular_velocity.h>
 #include <uORB/topics/vehicle_attitude.h>
 #include <uORB/topics/vehicle_local_position.h>
+#include <uORB/topics/quad_control_log.h>
 
 using namespace matrix;
 
@@ -18,6 +19,7 @@ public:
   void set_gains(float _kx = 1.0f, float _kv = 2.0f, float _kI = 0.01f,
                  float _kR = 0.35f, float _kOmega = 0.15f, float _m = 1.5f,
                  float _Jxx = 0.005, float _Jyy = 0.005, float _Jzz = 0.009);
+  void enable_logging(bool enable);
   void reset_integral();
   void update_state_pos(vehicle_local_position_s pos);
   void update_state_attitude(vehicle_attitude_s att);
@@ -27,12 +29,16 @@ public:
 
   float get_thrust_cmd();
   Vector3f get_torque_cmd();
+  quad_control_log_s get_log_message();
 
 private:
+
   // PARAMETERS
   float kx, kv, ki, kR, kOmega;
   float m, g;
   SquareMatrix<float, 3> J;
+
+  bool enable_logging_ = false;
 
   // STATE
   Vector3f x, v, Omega, ei;
@@ -45,4 +51,7 @@ private:
   // results
   float thrust_cmd;
   Vector3f torque_cmd;
+
+  // QuadControlLog
+  quad_control_log_s log_msg;
 };

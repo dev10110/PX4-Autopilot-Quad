@@ -153,6 +153,19 @@ public:
 	{
 		(*this).transpose().print();
 	}
+
+  Vector elwise_zero_if_nan() const
+  {
+		const Vector &a(*this);
+		Vector r;
+
+		for (size_t i=0; i < M; i++){
+			r(i) = PX4_ISFINITE(a(i)) ? a(i) : r(i);
+		}
+
+	  return a;
+	}
+
 	
 	Vector zero_if_nan() const
 	{
