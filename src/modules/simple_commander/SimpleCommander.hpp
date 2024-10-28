@@ -98,6 +98,7 @@ private:
   hrt_abstime _last_arm_status_pub{0};
   hrt_abstime _last_timestamp_offboard{0};
   hrt_abstime _last_land_cmd_started{0};
+  hrt_abstime _last_timestamp_valid_local_position{0};
 
   bool check_preflight_arming_ = false;
   bool check_preflight_offboard_ = true;

@@ -108,6 +108,17 @@ void SimpleCommander::run() {
       _last_timestamp_offboard = hrt_absolute_time();
     }
 
+    // check for local position setpoint
+    if (_vehicle_local_position_sub.updated()) {
+      // check if all valid
+      vehicle_local_position_s msg;
+      _vehicle_local_position_sub.copy(&msg);
+      if (msg.xy_valid && msg.z_valid && msg.v_xy_valid && msg.v_z_valid &&
+          msg.heading_good_for_control) {
+        _last_timestamp_valid_local_position = hrt_absolute_time();
+      }
+    }
+
     // check for commands
     if (_commander_set_state_sub.updated()) {
       commander_set_state_s msg;
@@ -310,7 +321,14 @@ void SimpleCommander::run_state_machine() {
     if (hrt_elapsed_time(&_last_timestamp_offboard) > 200_ms) {
       PX4_WARN("Setting VehicleState::LAND because offboard_timestamp timeout");
       set_state(VehicleState::LAND);
-    } 
+    }
+
+    // timeout on last valid position estimate
+    if (hrt_elapsed_time(&_last_timestamp_valid_local_position) > 200_ms) {
+      PX4_WARN(
+          "Setting VehicleState::LAND because valid_local_position timeout");
+      set_state(VehicleState::LAND);
+    }
 
     return;
 
